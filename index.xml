@@ -8,6 +8,15 @@
     <language>en-us</language>
     <lastBuildDate>Fri, 11 Dec 2020 18:08:42 +0800</lastBuildDate><atom:link href="https://xiaowenxiao.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>Win10&amp;Ubuntu子系统</title>
+      <link>https://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</link>
+      <pubDate>Fri, 11 Dec 2020 18:20:02 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</guid>
+      <description>#============================================================================= # 系统版本 # Windows： # OS 名称: Microsoft Windows 10 专业版 # OS 版本: 10.0.18363 暂缺 Build 18363 # OS 制造商: Microsoft Corporation # OS 配置: 独立工作站 # OS 构建类型: Multiprocessor Free # Linux： # NAME=&amp;#34;Ubuntu&amp;#34; # VERSION=&amp;#34;20.04.1 LTS (Focal Fossa)&amp;#34; #============================================================================= # 安装ssh(当前用户下，这里当前用户为x) sudo apt-get remove openssh-server sudo apt-get install openssh-server cd /home/x/.ssh vi /etc/ssh/sshd_config PermitRootLogin yes PasswordAuthentication yes # 授权普通用户使用sudo不用输入密码 vim /etc/sudoers x ALL=(ALL:ALL) NOPASSWD:ALL #%sudo ALL=(ALL:ALL) NOPASSWD:ALL # 配置windows开机启动子系统ssh # cmd=&amp;gt;shell:startup # 在开机启动目录下新建wls_sshd.</description>
+    </item>
+    
+    <item>
       <title>About</title>
       <link>https://xiaowenxiao.github.io/welcome/</link>
       <pubDate>Fri, 11 Dec 2020 18:08:42 +0800</pubDate>
