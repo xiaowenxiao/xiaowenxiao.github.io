@@ -3,48 +3,15 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</loc>
-    <lastmod>2020-12-11T18:20:02+08:00</lastmod>
+    <loc>http://localhost:1313/categories/</loc>
   </url>
   
   <url>
-    <loc>https://xiaowenxiao.github.io/welcome/</loc>
-    <lastmod>2020-12-11T18:08:42+08:00</lastmod>
+    <loc>http://localhost:1313/tags/</loc>
   </url>
   
   <url>
-    <loc>https://xiaowenxiao.github.io/categories/</loc>
-    <lastmod>2020-12-11T18:08:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/tags/development/</loc>
-    <lastmod>2020-12-11T18:08:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/categories/development/</loc>
-    <lastmod>2020-12-11T18:08:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/categories/golang/</loc>
-    <lastmod>2020-12-11T18:08:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/tags/golang/</loc>
-    <lastmod>2020-12-11T18:08:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/tags/</loc>
-    <lastmod>2020-12-11T18:08:42+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/</loc>
-    <lastmod>2020-12-11T18:08:42+08:00</lastmod>
+    <loc>http://localhost:1313/</loc>
   </url>
   
 </urlset>
