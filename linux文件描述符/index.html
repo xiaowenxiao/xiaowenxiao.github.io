@@ -1,0 +1,178 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Linux文件描述符 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="http://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="http://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="http://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="http://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/linux">linux</a></li><li><a href="http://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="文件描述符">文件描述符</h1>
+<h2 id="文件描述符的定义">文件描述符的定义</h2>
+<p>　　文件描述符是内核为了高效管理已被打开的文件所创建的索引，用于指向被打开的文件，所有执行I/O操作的系统调用都通过文件描述符；文件描述符是一个简单的非负整数，用以表明每个被进程打开的文件。程序刚刚启动时，第一个打开的文件是0，第二个是1，以此类推。也可以理解为文件的身份ID。
+　　用户通过操作系统处理信息的过程中，使用的交互设备文件（键盘，鼠标，显示器）</p>
+<table>
+<thead>
+<tr>
+<th>文件描述符</th>
+<th>通道名</th>
+<th>描述</th>
+<th>默认连接</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>stdin</td>
+<td>标准输入</td>
+<td>键盘</td>
+<td>read only</td>
+</tr>
+<tr>
+<td>1</td>
+<td>stdout</td>
+<td>标准输出</td>
+<td>终端</td>
+<td>write only</td>
+</tr>
+<tr>
+<td>2</td>
+<td>stderr</td>
+<td>标准错误</td>
+<td>终端</td>
+<td>write only</td>
+</tr>
+<tr>
+<td>3以上</td>
+<td>filename</td>
+<td>其他文件</td>
+<td>none</td>
+<td>read and/or write</td>
+</tr>
+</tbody>
+</table>
+<h2 id="标准输入输出说明">标准输入输出说明</h2>
+<ul>
+<li>stdin，标准输入，默认设备是键盘，文件编号为0</li>
+<li>stdout，标准输出，默认设备是显示器，文件编号为1，也可以重定向到文件</li>
+<li>stderr，标准错误，默认设备是显示器，文件编号为2，也可以重定向到文件</li>
+</ul>
+<p>查看一个进程打开了哪些文件
+<strong>语法：</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">ll /proc/<span style="color:#f92672">[</span>进程ID<span style="color:#f92672">]</span>/fd
+</code></pre></div><h2 id="文件描述符限制">文件描述符限制</h2>
+<p>Linux中最大文件描述符的限制有两个方面，一个是用户级限制，一个是系统级限制。
+但是，查看Linux文件描述符限制有三种方式：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; sysctl -a | grep file-max　　　　//过滤一下，不然参数太多不好找
+sysctl: permission denied on key <span style="color:#e6db74">&#39;fs.protected_hardlinks&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;fs.protected_symlinks&#39;</span>
+fs.file-max <span style="color:#f92672">=</span> 196630　　　　//file-max其实是红色字体
+sysctl: permission denied on key <span style="color:#e6db74">&#39;kernel.cad_pid&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;kernel.usermodehelper.bset&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;kernel.usermodehelper.inheritable&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;net.core.bpf_jit_harden&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;net.ipv4.tcp_fastopen_key&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;net.ipv6.conf.all.stable_secret&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;net.ipv6.conf.default.stable_secret&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;net.ipv6.conf.ens33.stable_secret&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;net.ipv6.conf.lo.stable_secret&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;net.ipv6.conf.virbr0.stable_secret&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;net.ipv6.conf.virbr0-nic.stable_secret&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;vm.mmap_rnd_bits&#39;</span>
+sysctl: permission denied on key <span style="color:#e6db74">&#39;vm.mmap_rnd_compat_bits&#39;</span>
+&gt;&gt; cat /proc/sys/fs/file-max
+<span style="color:#ae81ff">196630</span>
+&gt;&gt; ulimit -n
+<span style="color:#ae81ff">1024</span>
+</code></pre></div><h2 id="永久修改文件描述符">永久修改文件描述符</h2>
+<ol>
+<li>计算 fdmax = 物理内存大小(m为单位) / 4 * 256  假设内存为8G,fdmax=524288</li>
+<li>执行命令: echo fs.file-max=524288 &raquo; /etc/sysctl.conf</li>
+<li>执行命令: sysctl -p</li>
+<li>执行命令: echo  * soft nofile  524286 &raquo; /etc/security/limits.conf</li>
+<li>执行命令: echo  * hard nofile 524287 &raquo; /etc/security/limits.conf</li>
+<li>结束当前会话期</li>
+<li>启动新的会话</li>
+<li>启动我们的服务</li>
+</ol>
+<h1 id="补充">补充</h1>
+<h2 id="一个文件什么情况下才会被删除">一个文件什么情况下才会被删除？</h2>
+<p>实际上，只有当一个文件的引用计数为0（包括硬链接数）的时候，才可能调用unlink删除，只要它不是0，那么就不会被删除。所谓的删除，也不过是文件名到 inode 的链接删除，只要不被重新写入新的数据，磁盘上的block数据块不会被删除，因此，你会看到，即便删库跑路了，某些数据还是可以恢复的。换句话说，当一个程序打开一个文件的时候（获取到文件描述符），它的引用计数会被+1，rm虽然看似删除了文件，实际上只是会将引用计数减1，但由于引用计数不为0，因此文件不会被删除。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">struct inode <span style="color:#f92672">{</span>
+struct hlist_node   i_hash; /* hash链表的指针 */
+struct list_head    i_list; /* backing dev IO list */
+struct list_head    i_sb_list; /* 超级块的inode链表 */
+struct list_head    i_dentry; /* 引用inode的目录项对象链表头 */
+unsigned long    i_ino; /* 索引节点号 */
+atomic_t         i_count; /* 引用计数 */
+unsigned int     i_nlink; /* 硬链接数目 */
+</code></pre></div><h2 id="如何释放已经被删除文件占用的空间">如何释放已经被删除文件占用的空间？</h2>
+<p>关于释放，前面已经说了，重启打开该文件的进程即可。但是有没有方法找到哪些文件被删除了，但还是被某些进程打开了呢？
+自然是有方法的：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; lsof |grep deleted
+</code></pre></div><p>其中被标记为deleted的文件，就是这样的一些文件。
+其实在前面的例子中，我们也可以很容易观察到(openFile程序运行，test.txt文件被删除)：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; ls -al /proc/<span style="color:#e6db74">`</span>pidof openFile<span style="color:#e6db74">`</span>/fd
+total <span style="color:#ae81ff">0</span>
+lrwx------ <span style="color:#ae81ff">1</span> root root <span style="color:#ae81ff">64</span> 5月   <span style="color:#ae81ff">4</span> 09:27 <span style="color:#ae81ff">0</span> -&gt; /dev/pts/25
+lrwx------ <span style="color:#ae81ff">1</span> root root <span style="color:#ae81ff">64</span> 5月   <span style="color:#ae81ff">4</span> 09:27 <span style="color:#ae81ff">1</span> -&gt; /dev/pts/25
+lrwx------ <span style="color:#ae81ff">1</span> root root <span style="color:#ae81ff">64</span> 5月   <span style="color:#ae81ff">4</span> 09:27 <span style="color:#ae81ff">2</span> -&gt; /dev/pts/25
+lrwx------ <span style="color:#ae81ff">1</span> root root <span style="color:#ae81ff">64</span> 5月   <span style="color:#ae81ff">4</span> 09:27 <span style="color:#ae81ff">3</span> -&gt; /boot/test.txt <span style="color:#f92672">(</span>deleted<span style="color:#f92672">)</span>
+</code></pre></div><p>test.txt后面还有deleted字样。
+这样的情况下文件是没有被删除的，那么还能不能恢复呢？实际上还是可以读取的。
+总结
+实际上对于这种文件被删除了，常常出现于程序的日志文件中，可能你有一个定时任务去清理程序产生的日志文件，但是如果程序本身忘记关闭句柄，就会导致磁盘空间得不到释放，最终就是你认为文件都被删除了，但是磁盘却依然被占着。所以，养成好习惯，打开文件后，不用时，记得关闭文件描述符。
+如果发现明明已经删除了大量文件，但是空间却并没有恢复正常，那么不妨看看是不是还有程序打开了这些文件。</p>
+<h2 id="一些命令">一些命令</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 查看系统总限制的命令：</span>
+&gt;&gt; cat /proc/sys/fs/file-max
+
+<span style="color:#75715e"># 查看整个系统目前使用的文件句柄数量命令：</span>
+&gt;&gt; cat /proc/sys/fs/file-nr
+
+<span style="color:#75715e"># 显示已打开该目录或文件的所有进程信息</span>
+&gt;&gt; lsof path/filename
+
+<span style="color:#75715e"># 查看某个进程开了哪些句柄</span>
+&gt;&gt; lsof -p pid
+
+<span style="color:#75715e"># 某个进程开了几个句柄：</span>
+&gt;&gt; lsof -p pid |wc –l
+</code></pre></div>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

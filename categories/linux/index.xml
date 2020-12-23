@@ -1,12 +1,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>x&#39;Blog</title>
-    <link>http://xiaowenxiao.github.io/</link>
-    <description>Recent content on x&#39;Blog</description>
+    <title>linux on x&#39;Blog</title>
+    <link>http://xiaowenxiao.github.io/categories/linux/</link>
+    <description>Recent content in linux on x&#39;Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Wed, 23 Dec 2020 16:16:02 +0800</lastBuildDate>
     
-        <atom:link href="http://xiaowenxiao.github.io/index.xml" rel="self" type="application/rss+xml" />
+        <atom:link href="http://xiaowenxiao.github.io/categories/linux/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -79,15 +79,6 @@
       
       <guid>http://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</guid>
       <description>配置达到的效果 子系统随win10开机一起启动（跟未装子系统开机时间比较无明显差异） ssh服务配置开机自启，无需其他操作开机直接连接xhell</description>
-    </item>
-    
-    <item>
-      <title>about</title>
-      <link>http://xiaowenxiao.github.io/about/</link>
-      <pubDate>Tue, 15 Dec 2020 15:21:08 +0800</pubDate>
-      
-      <guid>http://xiaowenxiao.github.io/about/</guid>
-      <description>ฅ۶•ﻌ•♡</description>
     </item>
     
   </channel>

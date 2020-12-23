@@ -1,0 +1,155 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> 内存CPU占用分析 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="http://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="http://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="http://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="http://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/linux">linux</a></li><li><a href="http://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="内存">内存</h1>
+<h2 id="什么是page-cache">什么是page cache？</h2>
+<p>Page cache主要用来作为文件系统上的文件数据的缓存来用，尤其是针对当进程对文件有read／write操作的时候。如果你仔细想想的话，作为可以映射文件到内存的系统调用：mmap是不是很自然的也应该用到page cache？在当前的系统实现里，page cache也被作为其它文件类型的缓存设备来用，所以事实上page cache也负责了大部分的块设备文件的缓存工作。</p>
+<h2 id="什么是buffer-cache">什么是buffer cache</h2>
+<p>Buffer cache则主要是设计用来在系统对块设备进行读写的时候，对块进行数据缓存的系统来使用。这意味着某些对块的操作会使用buffer cache进行缓存，比如我们在格式化文件系统的时候。一般情况下两个缓存系统是一起配合使用的，比如当我们对一个文件进行写操作的时候，page cache的内容会被改变，而buffer cache则可以用来将page标记为不同的缓冲区，并记录是哪一个缓冲区被修改了。这样，内核在后续执行脏数据的回写（writeback）时，就不用将整个page写回，而只需要写回修改的部分即可。</p>
+<h2 id="如何回收cache">如何回收cache？</h2>
+<p>Linux内核会在内存将要耗尽的时候，触发内存回收的工作，以便释放出内存给急需内存的进程使用。一般情况下，这个操作中主要的内存释放都来自于对buffer／cache的释放。尤其是被使用更多的cache空间。既然它主要用来做缓存，只是在内存够用的时候加快进程对文件的读写速度，那么在内存压力较大的情况下，当然有必要清空释放cache，作为free空间分给相关进程使用。所以一般情况下，我们认为buffer/cache空间可以被释放，这个理解是正确的。</p>
+<p>但是这种清缓存的工作也并不是没有成本。理解cache是干什么的就可以明白清缓存必须保证cache中的数据跟对应文件中的数据一致，才能对cache进行<a href="http://www.idcyunwei.org/post/162.html">释放</a>。所以伴随着cache清除的行为的，一般都是系统IO飙高。因为内核要对比cache中的数据和对应硬盘文件上的数据是否一致，如果不一致需要写回，之后才能回收。</p>
+<p><strong>查看内存状态</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; free -h
+</code></pre></div><blockquote>
+<p>total——总物理内存
+used——已使用内存，一般情况这个值会比较大，因为这个值包括了cache+应用程序使用的内存
+free——完全未被使用的内存
+shared——应用程序共享内存
+buffers——缓存，主要用于目录方面,inode值等（ls大目录可看到这个值增加）
+cached——缓存，用于已打开的文件</p>
+</blockquote>
+<h2 id="释放内存">释放内存</h2>
+<p>刷新缓冲区</p>
+<p>某些情况下，我们必须停止系统，此时可以运行 sync 命令以确保文件系统的完整性；sync 命令将所有未写的系统缓冲区写到磁盘中，包含已修改的 i-node、已延迟的块 I/O 和读写映射文件。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; sync <span style="color:#f92672">&amp;&amp;</span> sync  <span style="color:#75715e"># 执行两次</span>
+</code></pre></div><blockquote>
+<p>0：不释放（系统默认值）</p>
+</blockquote>
+<p>1.释放page cahce</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; echo <span style="color:#ae81ff">1</span> &gt; /proc/sys/vm/drop_cache
+</code></pre></div><p>2.释放dentry和inode</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; echo <span style="color:#ae81ff">2</span> &gt; /proc/sys/vm/drop_cache
+</code></pre></div><p>3.释放page cache,dentry,inode</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; echo <span style="color:#ae81ff">3</span> &gt; /proc/sys/vm/drop_cache
+</code></pre></div><h2 id="进程消耗内存状态">进程消耗内存状态</h2>
+<h3 id="命令查看">命令查看</h3>
+<p>内存消耗最多的前10个进程</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; ps -A --sort -rss -o comm,pid,pmem | head
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; ps auxw|head -1;ps auxw|sort -rn -k4|head -10
+</code></pre></div><p>虚拟内存使用最多的前10个进程</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; ps auxw|head -1;ps auxw|sort -rn -k5|head -10
+</code></pre></div><p><em><code>-n</code>是按照数字大小排序，<code>-r</code>是以相反顺序，<code>-k</code>是指定需要排序的栏位</em></p>
+<h3 id="推荐使用ps_mempy来查看内存状态"><strong>【推荐】使用ps_mem.py来查看内存状态</strong></h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; git clone https://github.com/pixelb/ps_mem.git <span style="color:#f92672">&amp;&amp;</span> cd ps_mem
+
+&gt;&gt; ps_mem.py -h
+Usage: ps_mem <span style="color:#f92672">[</span>OPTION<span style="color:#f92672">]</span>...
+Show program core memory usage
+
+  -h, -help                   Show this help
+  -p &lt;pid&gt;<span style="color:#f92672">[</span>,pid2,...pidN<span style="color:#f92672">]</span>     Only show memory usage PIDs in the specified list
+  -s, --split-args            Show and separate by, all command line arguments
+  -t, --total                 Show only the total value
+  -d, --discriminate-by-pid   Show by process rather than by program
+  -S, --swap                  Show swap information
+  -w &lt;N&gt;                      Measure and show process memory every N seconds
+
+&gt;&gt; ps_mem.py -d
+100.9 MiB +   1.6 MiB <span style="color:#f92672">=</span> 102.5 MiB	beam.smp <span style="color:#f92672">[</span>9793<span style="color:#f92672">]</span>
+ 98.6 MiB +   4.6 MiB <span style="color:#f92672">=</span> 103.2 MiB	dotnet <span style="color:#f92672">[</span>6469<span style="color:#f92672">]</span>
+103.5 MiB +   1.6 MiB <span style="color:#f92672">=</span> 105.1 MiB	beam.smp <span style="color:#f92672">[</span>9715<span style="color:#f92672">]</span>
+103.2 MiB +   4.6 MiB <span style="color:#f92672">=</span> 107.8 MiB	dotnet <span style="color:#f92672">[</span>5328<span style="color:#f92672">]</span>
+265.2 MiB + 113.5 KiB <span style="color:#f92672">=</span> 265.3 MiB	dockerd <span style="color:#f92672">[</span>1576<span style="color:#f92672">]</span>
+356.1 MiB +  19.3 MiB <span style="color:#f92672">=</span> 375.4 MiB	dotnet <span style="color:#f92672">[</span>6262<span style="color:#f92672">]</span>
+368.2 MiB +  19.3 MiB <span style="color:#f92672">=</span> 387.5 MiB	dotnet <span style="color:#f92672">[</span>5523<span style="color:#f92672">]</span>
+941.2 MiB +   9.1 MiB <span style="color:#f92672">=</span> 950.3 MiB	dotnet <span style="color:#f92672">[</span>6206<span style="color:#f92672">]</span>
+960.0 MiB +   9.1 MiB <span style="color:#f92672">=</span> 969.2 MiB	dotnet <span style="color:#f92672">[</span>6049<span style="color:#f92672">]</span>
+972.1 MiB +   9.4 MiB <span style="color:#f92672">=</span> 981.5 MiB	mysqld <span style="color:#f92672">[</span>6279<span style="color:#f92672">]</span>
+987.4 MiB +   9.4 MiB <span style="color:#f92672">=</span> 996.8 MiB	mysqld <span style="color:#f92672">[</span>5810<span style="color:#f92672">]</span>
+  2.7 GiB +   9.0 MiB <span style="color:#f92672">=</span>   2.7 GiB	java <span style="color:#f92672">[</span>6670<span style="color:#f92672">]</span>
+  2.7 GiB +   9.0 MiB <span style="color:#f92672">=</span>   2.7 GiB	java <span style="color:#f92672">[</span>6671<span style="color:#f92672">]</span>
+---------------------------------
+                         12.1 GiB
+<span style="color:#f92672">=================================</span>
+
+<span style="color:#75715e"># 根据上面进程号，杀死相应的进程</span>
+</code></pre></div><h1 id="cpu">CPU</h1>
+<h2 id="找到占用最高的进程线程">找到占用最高的进程，线程</h2>
+<ul>
+<li>
+<p>执行top -c ，显示进程运行信息列表</p>
+</li>
+<li>
+<p>键入P (大写p)，进程按照CPU使用率排序</p>
+</li>
+<li>
+<p>top -Hp 10765 ，显示一个进程的线程运行信息列表</p>
+</li>
+<li>
+<p>键入P (大写p)，线程按照CPU使用率排序</p>
+</li>
+<li>
+<p>将线程PID转化为16进制（进程10765内，最耗CPU的线程PID为10804）</p>
+<p>工具：printf</p>
+<p>方法：printf “%x” 10804</p>
+</li>
+<li>
+<p>查看堆栈，找到线程在干嘛</p>
+<p>工具：pstack/jstack/grep</p>
+<p>方法：jstack 10765 | grep ‘0x2a34’ -C5 &ndash;color</p>
+</li>
+</ul>
+<blockquote>
+<p>CPU占用最多的前10个进程： 
+ps auxw|head -1;ps auxw|sort -rn -k3|head -10</p>
+</blockquote>
+<h2 id="top"><strong>top</strong></h2>
+<p><a href="https://man.linuxde.net/top">https://man.linuxde.net/top</a></p>
+<p>1: 显示所有cpu线程</p>
+<p>-P: 按照占用率大小排序</p>
+<h2 id="htop"><strong>htop</strong></h2>
+<p><a href="https://wsgzao.github.io/post/htop/">https://wsgzao.github.io/post/htop/</a></p>
+
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>
