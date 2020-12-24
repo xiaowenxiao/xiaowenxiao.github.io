@@ -1,0 +1,642 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> K8s集群部署 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="k8s集群部署">K8s集群部署</h1>
+<h2 id="环境">环境</h2>
+<table>
+<thead>
+<tr>
+<th>主机名</th>
+<th>系统版本</th>
+<th>ip</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>master-01</td>
+<td>Ubuntu 18.04.4 LTS</td>
+<td>10.10.10.1</td>
+<td>master、ndoe、etcd1</td>
+</tr>
+<tr>
+<td>master-02</td>
+<td>Ubuntu 18.04.4 LTS</td>
+<td>10.10.10.2</td>
+<td>master、ndoe、etcd2</td>
+</tr>
+<tr>
+<td>master-03</td>
+<td>Ubuntu 18.04.4 LTS</td>
+<td>10.10.10.3</td>
+<td>master、ndoe、etcd3</td>
+</tr>
+<tr>
+<td>jumpserver</td>
+<td>Ubuntu 18.04.4 LTS</td>
+<td>10.10.10.10</td>
+<td>jumpserver、harbor、node</td>
+</tr>
+</tbody>
+</table>
+<p><strong>package：</strong>
+docker-19.03.9.tgz
+docker-compose
+etcd_Prod-v1.1_3.4.3.tar.gz
+kubernetes-prod-v1.8.tar.gz</p>
+<p><strong>image：</strong>
+cluster-proportional-autoscaler-amd64.tar
+coredns.tar</p>
+<h2 id="主机初始化">主机初始化</h2>
+<h3 id="欢迎界面信息修改">欢迎界面信息修改</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat welcome.sh
+set -x -e -u -o pipefail
+host_name<span style="color:#f92672">=</span><span style="color:#e6db74">`</span>hostname<span style="color:#e6db74">`</span>
+time_tag<span style="color:#f92672">=</span><span style="color:#e6db74">`</span>date +<span style="color:#e6db74">&#34;%Y-%m-%d-%k-%M&#34;</span><span style="color:#e6db74">`</span>
+
+<span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> ! -f /etc/<span style="color:#e6db74">${</span>host_name<span style="color:#e6db74">}</span>.txt <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+    echo <span style="color:#e6db74">&#34;/etc/</span><span style="color:#e6db74">${</span>host_name<span style="color:#e6db74">}</span><span style="color:#e6db74">.txt file does not exist,new file now&#34;</span>   
+<span style="color:#66d9ef">else</span>
+    mv /etc/<span style="color:#e6db74">${</span>host_name<span style="color:#e6db74">}</span>.txt /etc/<span style="color:#e6db74">${</span>host_name<span style="color:#e6db74">}</span>.txt_bak<span style="color:#e6db74">${</span>time_tag<span style="color:#e6db74">}</span>
+<span style="color:#66d9ef">fi</span>
+
+<span style="color:#75715e"># 删除多余欢迎界面读取信息的文件</span>
+cd /etc/update-motd.d
+rm -rf 10-help-text 50-motd-news 80-esm 80-livepatch 90-updates-available 91-release-upgrade 92-unattended-upgrades  95-hwe-eol 97-overlayroot 98-fsck-at-reboot 98-    reboot-required
+
+<span style="color:#75715e"># 安装figlet(文本转换为大字母)</span>
+apt-get install  figlet
+figlet <span style="color:#e6db74">${</span>host_name<span style="color:#e6db74">}</span> &gt; /etc/<span style="color:#e6db74">${</span>host_name<span style="color:#e6db74">}</span>.txt
+
+<span style="color:#75715e"># 生成欢迎界面读取的文件</span>
+sed -i -ne <span style="color:#e6db74">&#39;p;/printf/n&#39;</span> /etc/update-motd.d/00-header
+sed -i <span style="color:#e6db74">&#39;/printf/a\&#39;</span><span style="color:#e6db74">&#34;cat /etc/</span><span style="color:#e6db74">${</span>host_name<span style="color:#e6db74">}</span><span style="color:#e6db74">.txt&#34;</span> /etc/update-motd.d/00-header
+
+<span style="color:#75715e"># 检测是否成功run-parts</span>
+mv /run/motd.dynamic /run/motd.dynamic_bak
+ln -s /etc/update-motd.d/ /run/motd.dynamic
+run-parts /etc/update-motd.d/
+</code></pre></div><h3 id="检查root权限可选">检查ROOT权限（可选）</h3>
+<p>如果已经有管理员权限，可以跳过。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /etc/sudoers
+root ALL<span style="color:#f92672">=(</span>ALL<span style="color:#f92672">)</span> ALL
+用户名 ALL<span style="color:#f92672">=(</span>ALL<span style="color:#f92672">)</span> ALL  <span style="color:#f92672">(</span>添加本行）
+</code></pre></div><h3 id="初始化脚本">初始化脚本</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat init.sh
+<span style="color:#75715e">#!/bin/bash</span>
+set -x
+init_18<span style="color:#f92672">(){</span>
+set -eu
+<span style="color:#75715e"># 初始化主机名</span>
+<span style="color:#75715e">#hostnamectl set-hostname $TWITTAR_HOSTNAME</span>
+<span style="color:#75715e"># 初始化时区</span>
+ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+echo <span style="color:#e6db74">&#34;Asia/Shanghai&#34;</span> &gt;/etc/timezone
+<span style="color:#75715e"># 配置vim</span>
+cat &gt; /etc/vim/vimrc.local <span style="color:#e6db74">&lt;&lt;EOF
+</span><span style="color:#e6db74">syntax on
+</span><span style="color:#e6db74">set hlsearch
+</span><span style="color:#e6db74">set number
+</span><span style="color:#e6db74">set incsearch
+</span><span style="color:#e6db74">set expandtab
+</span><span style="color:#e6db74">set shiftwidth=4
+</span><span style="color:#e6db74">set tabstop=4
+</span><span style="color:#e6db74">set backspace=2
+</span><span style="color:#e6db74">set cindent
+</span><span style="color:#e6db74">set autoindent
+</span><span style="color:#e6db74">filetype indent on
+</span><span style="color:#e6db74">colorscheme desert
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">autocmd FileType make set noexpandtab
+</span><span style="color:#e6db74">autocmd BufRead,BufNewFile *.sls set filetype=yaml
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">set laststatus=2
+</span><span style="color:#e6db74">set statusline=%F%*\ \[%{&amp;encoding}]\ [%{&amp;fileformat}]\ %y\ %2*%r%m%*\ %l,%c\ %=%l/%L\ (%p%%)%*\ %{strftime(&#39;%Y-%m-%d-%H:%M&#39;)}
+</span><span style="color:#e6db74">set paste
+</span><span style="color:#e6db74">EOF</span>
+
+<span style="color:#75715e"># 关闭dns缓存服务</span>
+systemctl disable systemd-resolved.service &amp;&gt;/dev/null
+systemctl stop systemd-resolved.service &amp;&gt;/dev/null
+<span style="color:#f92672">[</span> -f /run/systemd/resolve/resolv.conf <span style="color:#f92672">]</span> <span style="color:#f92672">&amp;&amp;</span> rm /etc/resolv.conf <span style="color:#f92672">&amp;&amp;</span>cp /run/systemd/resolve/resolv.conf /etc/resolv.conf
+<span style="color:#75715e"># 添加备用dns</span>
+grep -q <span style="color:#e6db74">&#34;114.114.114.114&#34;</span> /etc/resolv.conf <span style="color:#f92672">||</span> echo <span style="color:#e6db74">&#34;nameserver 114.114.114.114&#34;</span> &gt;&gt; /etc/resolv.conf
+<span style="color:#75715e"># 升级内核</span>
+apt-get -y update &gt; /dev/null
+<span style="color:#75715e"># apt-get -y install linux-image-4.4.0-137-generic linux-headers-4.4.0-137 linux-headers-4.4.0-137-generic &gt; /dev/null</span>
+<span style="color:#75715e"># 更新系统</span>
+<span style="color:#75715e"># apt-get -y upgrade &gt; /dev/null</span>
+<span style="color:#75715e"># 安装基础软件</span>
+apt-get install -y ntp lrzsz iotop htop iftop unzip tree acl git nload vim dstat liblzo2-2 libaio1 tmux lvm2 xfsprogs btrfs-tools &gt; /dev/null 2&gt;&amp;<span style="color:#ae81ff">1</span>
+<span style="color:#75715e"># 安装snoopy</span>
+export DEBIAN_FRONTEND<span style="color:#f92672">=</span>noninteractive
+apt-get install -q -y snoopy
+echo <span style="color:#e6db74">&#34;/lib/x86_64-linux-gnu/libsnoopy.so&#34;</span> &gt; /etc/ld.so.preload
+grep -q <span style="color:#e6db74">&#39;^filter_chain&#39;</span> /etc/snoopy.ini<span style="color:#f92672">||</span> echo -e <span style="color:#e6db74">&#39;filter_chain = &#34;only_tty&#34;\nmessage_format=&#34;[uid:%{uid} sid:%{sid} tty:%{tty} cwd:%{cwd} filename:%{filename}]: %{cmdline}&#34;&#39;</span> &gt;&gt; /etc/snoopy.ini
+
+<span style="color:#75715e"># 初始化标准目录</span>
+mkdir -p /data/<span style="color:#f92672">{</span>cache,config,db,log,tmp,var,web<span style="color:#f92672">}</span>
+
+<span style="color:#f92672">}</span>
+
+
+<span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> <span style="color:#e6db74">&#34;`lsb_release -r|awk &#39;{sub(/\..*</span>$<span style="color:#e6db74">/,&#34;&#34;,</span>$2<span style="color:#e6db74">);print </span>$2<span style="color:#e6db74">}&#39;`&#34;</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;18&#34;</span> <span style="color:#f92672">]]</span> ;<span style="color:#66d9ef">then</span>
+    init_18 &gt;/dev/null
+<span style="color:#66d9ef">fi</span>
+</code></pre></div><h2 id="安装docker19039">安装Docker19.03.9</h2>
+<p><a href="https://download.docker.com/linux/static/stable/">Docker官方Bin包下载地址</a>
+<a href="https://mirrors.aliyun.com/docker-ce/linux/static/stable/x86_64/">阿里云Docker镜像Bin包地址</a></p>
+<h3 id="创建docker工作目录">创建docker工作目录</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; mkdir -p /srv/docker
+</code></pre></div><h3 id="需要的文件">需要的文件</h3>
+<blockquote>
+<p>daemon.json
+docker-19.03.9.tgz
+docker.service</p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /etc/docker/daemon.json
+<span style="color:#f92672">{</span>
+    <span style="color:#e6db74">&#34;insecure-registries&#34;</span>: <span style="color:#f92672">[</span>
+        <span style="color:#e6db74">&#34;10.16.43.130:5080&#34;</span>,
+        <span style="color:#e6db74">&#34;registry.scrcu.com:80&#34;</span>
+    <span style="color:#f92672">]</span>,
+    <span style="color:#e6db74">&#34;registry-mirrors&#34;</span>:<span style="color:#f92672">[</span>
+        <span style="color:#e6db74">&#34;https://d8b3zdiw.mirror.aliyuncs.com&#34;</span>
+    <span style="color:#f92672">]</span>,
+    <span style="color:#e6db74">&#34;data-root&#34;</span>: <span style="color:#e6db74">&#34;/data/docker&#34;</span>
+<span style="color:#f92672">}</span>
+<span style="color:#75715e">#insecure-registries： 不使用https的镜像仓库</span>
+<span style="color:#75715e">#graph： docker运行时文件存档路径\（v18.06之前的版本可以用，后面用data-root替换）</span>
+<span style="color:#75715e">#log-driver: 日志驱动</span>
+<span style="color:#75715e">#data-root: 新版本 替换graph的新参数（v19.03）</span>
+</code></pre></div><pre><code class="language-ba" data-lang="ba">&gt;&gt; cat /etc/systemd/system/docker.service
+[Unit]
+Description=Docker Application Container Engine
+Documentation=https://docs.docker.com
+#BindsTo=containerd.service.  — 无需containerd。
+After=network-online.target firewalld.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+# the default is not to use systemd for cgroups because the delegate issues still
+# exists and systemd currently does not support the cgroup feature set required
+# for containers run by docker
+ExecStart=/usr/bin/dockerd -H unix://
+ExecReload=/bin/kill -s HUP $MAINPID
+TimeoutSec=0
+RestartSec=2
+Restart=always
+
+# Note that StartLimit* options were moved from &quot;Service&quot; to &quot;Unit&quot; in systemd 229.
+# Both the old, and new location are accepted by systemd 229 and up, so using the old location
+# to make them work for either version of systemd.
+StartLimitBurst=3
+
+# Note that StartLimitInterval was renamed to StartLimitIntervalSec in systemd 230.
+# Both the old, and new name are accepted by systemd 230 and up, so using the old name to make
+# this option work for either version of systemd.
+StartLimitInterval=60s
+
+# Having non-zero Limit*s causes performance problems due to accounting overhead
+# in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+
+# Comment TasksMax if your systemd version does not supports it.
+# Only systemd 226 and above support this option.
+TasksMax=infinity
+
+# set delegate yes so that systemd does not reset the cgroups of docker containers
+Delegate=yes
+
+# kill only the docker process, not all processes in the cgroup
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+</code></pre><h3 id="安装配置docker">安装/配置Docker</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; tar zxvf docker-19.03.9.tgz
+&gt;&gt; cp docker/* /usr/bin/
+&gt;&gt; mkdir /etc/docker
+&gt;&gt; cp daemon.json /etc/docker/daemon.json
+&gt;&gt; cp docker.service /etc/systemd/system/ <span style="color:#f92672">&amp;&amp;</span> chmod <span style="color:#ae81ff">777</span> /etc/systemd/system/docker.service
+&gt;&gt; systemctl daemon-reload
+&gt;&gt; systemctl start docker
+&gt;&gt; systemctl enable docker
+&gt;&gt; docker info
+</code></pre></div><h2 id="安装etcd集群">安装etcd集群</h2>
+<h3 id="在master1安装">在master1安装</h3>
+<p>下载并解压程序（3台机器都做此操作）</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; tar xf etcd_Prod-v1.1_3.4.3.tar.gz -C /srv
+&gt;&gt; ln -s etcd_Prod-v1.1_3.4.3 etcd
+</code></pre></div><p>添加hosts（3台机器都做此操作）</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /etc/hosts
+10.10.10.1 master1 etcd1
+10.10.10.2 master2 etcd2
+10.10.10.3 master3 etcd3
+</code></pre></div><p>初始化</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; /srv/etcd/setup.etcd etcd1 10.10.10.1 10.10.10.2 10.10.10.3
+</code></pre></div><p>修改证书配置
+将IP.2/3/4改成对应的ip</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /srv/etcd/etc/ssl/csr.conf
+<span style="color:#f92672">[</span> req <span style="color:#f92672">]</span>
+default_bits <span style="color:#f92672">=</span> <span style="color:#ae81ff">2048</span>
+prompt <span style="color:#f92672">=</span> no
+default_md <span style="color:#f92672">=</span> sha256
+req_extensions <span style="color:#f92672">=</span> req_ext
+distinguished_name <span style="color:#f92672">=</span> dn
+
+<span style="color:#f92672">[</span> dn <span style="color:#f92672">]</span>
+C <span style="color:#f92672">=</span> CN
+ST <span style="color:#f92672">=</span> BeiJing
+L <span style="color:#f92672">=</span> BeiJing
+O <span style="color:#f92672">=</span> kubernetes
+OU <span style="color:#f92672">=</span> System
+CN <span style="color:#f92672">=</span> etcd
+
+<span style="color:#f92672">[</span> req_ext <span style="color:#f92672">]</span>
+subjectAltName <span style="color:#f92672">=</span> @alt_names
+
+<span style="color:#f92672">[</span> alt_names <span style="color:#f92672">]</span>
+DNS.1 <span style="color:#f92672">=</span> localhost
+DNS.2 <span style="color:#f92672">=</span> etcd1
+DNS.3 <span style="color:#f92672">=</span> etcd2
+DNS.4 <span style="color:#f92672">=</span> etcd3
+DNS.5 <span style="color:#f92672">=</span> etcd4
+DNS.6 <span style="color:#f92672">=</span> etcd5
+IP.1 <span style="color:#f92672">=</span> 127.0.0.1
+IP.2 <span style="color:#f92672">=</span> 10.10.10.1
+IP.3 <span style="color:#f92672">=</span> 10.10.10.2
+IP.4 <span style="color:#f92672">=</span> 10.10.10.3
+
+<span style="color:#f92672">[</span> v3_ext <span style="color:#f92672">]</span>
+authorityKeyIdentifier<span style="color:#f92672">=</span>keyid,issuer:always
+basicConstraints<span style="color:#f92672">=</span>CA:FALSE
+keyUsage<span style="color:#f92672">=</span>keyEncipherment,dataEncipherment
+extendedKeyUsage<span style="color:#f92672">=</span>serverAuth,clientAuth
+subjectAltName<span style="color:#f92672">=</span>@alt_names
+</code></pre></div><p>创建证书</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; /srv/etcd/tools/create_crt.sh
+</code></pre></div><p>同步证书到节点二、三</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; scp /srv/etcd/etc/ssl/<span style="color:#f92672">{</span>ca.crt,etcd.crt,etcd.key<span style="color:#f92672">}</span>  <span style="color:#f92672">[</span>节点二、三<span style="color:#f92672">]</span>:/srv/etcd/etc/ssl/
+</code></pre></div><h3 id="在master2安装">在master2安装</h3>
+<p>初始化</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; /srv/etcd/setup.etcd etcd2 10.10.10.1 10.10.10.2 10.10.10.3
+</code></pre></div><h3 id="在master3安装">在master3安装</h3>
+<p>初始化</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; /srv/etcd/setup.etcd etcd3 10.10.10.1 10.10.10.2 10.10.10.3
+</code></pre></div><p>启动</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; /srv/etcd/init.etcd start
+</code></pre></div><h3 id="检查">检查</h3>
+<p>检查集群状态：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; export ETCDCTL_API<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>      <span style="color:#75715e">#配置环境变量</span>
+&gt;&gt; /srv/etcd/bin/etcdctl member list
+581875ffcb42b5ba, started, etcd2, https://10.10.10.2:2380, https://10.10.10.2:2379, false
+86295c783e7b2904, started, etcd1, https://10.10.10.1:2380, https://10.10.10.1:2379, false
+89f92c578c14da41, started, etcd3, https://10.10.10.3:2380, https://10.10.10.3:2379, false
+
+&gt;&gt; /srv/etcd/bin/etcdctl endpoint health --endpoints<span style="color:#f92672">=</span>https://10.10.10.1:2379,https://10.10.10.2:2379,https://10.10.10.3:2379 --cacert /srv/etcd/etc/ssl/ca.crt --cert /srv/etcd/etc/ssl/etcd.crt --key /srv/etcd/etc/ssl/etcd.key
+https://10.10.10.1:2379 is healthy: successfully committed proposal: took <span style="color:#f92672">=</span> 11.608567ms
+https://10.10.10.2:2379 is healthy: successfully committed proposal: took <span style="color:#f92672">=</span> 12.302252ms
+https://10.10.10.3:2379 is healthy: successfully committed proposal: took <span style="color:#f92672">=</span> 15.398634ms
+</code></pre></div><h3 id="其它故障操作">其它/故障操作</h3>
+<p>etcd节点故障、丢失，需要重新部署，添加节点操作。（模拟可能某个物理机坏了，数据没了，系统重装了）</p>
+<p>在好的节点上删除节点，将节点移除集群</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; export ETCDCTL_API<span style="color:#f92672">=</span><span style="color:#ae81ff">3</span>
+&gt;&gt; etcdctl member list <span style="color:#75715e">#获取节点id（第一列），找到坏的节点id</span>
+&gt;&gt; etcdctl member remove &lt;节点id&gt;
+</code></pre></div><p>再添加节点</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; etcdctl member add etcd1 --peer-urls<span style="color:#f92672">=</span>https://20.1.100.1:2380
+Member 2b98a9176a7b0b2a added to cluster eadb63a644fb895d
+
+ETCD_NAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;etcd1&#34;</span>
+ETCD_INITIAL_CLUSTER<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;etcd1=https://20.1.100.1:2380,etcd3=https://20.1.100.3:2380,etcd2=https://20.1.100.2:2380&#34;</span>
+ETCD_INITIAL_ADVERTISE_PEER_URLS<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;https://20.1.100.1:2380&#34;</span>
+ETCD_INITIAL_CLUSTER_STATE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;existing&#34;</span>
+</code></pre></div><p>重装的节点，初始化好后，修改配置文件，主要把 initial-cluster-state: existing 改好。
+如果之前有启动过，需要删除/data/var/etcd/member/目录。
+启动/srv/etcd/init.etcd start</p>
+<h2 id="安装kubernetes集群">安装kubernetes集群</h2>
+<h3 id="master-节点一">master 节点一</h3>
+<h4 id="初始化">初始化</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; tar xf kubernetes-prod-v1.8.tar.gz -C /srv
+&gt;&gt; ln -s /srv/kubernetes-v1.17.4 /srv/kubernetes
+&gt;&gt; /srv/kubernetes/env-setup.sh master     <span style="color:#75715e">#初始化成master节点</span>
+&gt;&gt; . /etc/profile                          <span style="color:#75715e">#读取环境变量，使命令不需要决定路径使用</span>
+</code></pre></div><h4 id="修改配置文件">修改配置文件</h4>
+<p><strong>kube-apiserver.env</strong>
+需修改字段:</p>
+<blockquote>
+<p>advertise-address为本机ip。
+etcd-servers为etcd集群的ip。
+service-cluster-ip-range修改为service网段。</p>
+</blockquote>
+<pre><code>&gt;&gt; cat /srv/kubernetes/etc/kube-apiserver.env
+#这里仅显示需修改内容
+......
+KUBEAPI_ADDRESS=&quot;--advertise-address=10.10.10.1 --bind-address=0.0.0.0&quot;
+......
+--etcd-servers=https://10.10.10.1:2379,https://10.10.10.2:2379,https://10.10.10.3:2379&quot;
+......
+--service-cluster-ip-range=10.200.192.0/18 \
+</code></pre><p><strong>kubelet.env</strong>
+需修改字段:</p>
+<blockquote>
+<p>KUBELET_ADDRESS的ip为本机ip，
+KUBELET_HOSTNAME 的修改为本机主机名
+cluster-dns=修改为dns service的ip,统一使用service网段的第10个ip，这里service网段：10.233.248.0/21，则ip为10.233.248.10</p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /srv/kubernetes/etc/kubelet.env
+<span style="color:#75715e"># 这里仅显示需修改内容</span>
+KUBELET_ADDRESS<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;--address=10.10.10.1 --node-ip=10.10.10.1&#34;</span>
+
+KUBELET_HOSTNAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;--hostname-override=master-01&#34;</span>
+
+         --cluster-dns<span style="color:#f92672">=</span>10.200.192.10
+</code></pre></div><p><strong>kube-proxy.conf</strong>
+需修改字段：</p>
+<blockquote>
+<p>修改clusterCIDR为pod网段
+修改hostnameOverride 为自己主机名</p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /srv/kubernetes/etc/kube-proxy.conf
+<span style="color:#75715e"># 这里仅显示需修改内容</span>
+clusterCIDR: 10.200.0.0/17
+hostnameOverride: master-01
+</code></pre></div><p><strong>kube-controller-manager.env</strong>
+需修改字段:</p>
+<blockquote>
+<p>修改–cluster-cidr为pod网段</p>
+</blockquote>
+<pre><code>&gt;&gt; cat /srv/kubernetes/etc/kube-controller-manager.env
+# 这里仅显示需修改内容
+  --cluster-cidr=10.200.0.0/17 \
+</code></pre><h4 id="ssl证书及kubeconfig">ssl证书及kubeconfig</h4>
+<p><strong>根证书配置</strong></p>
+<blockquote>
+<p>修改DNS.8/9/10为master的主机名，IP.3/4/5为master的ip，IP.2修改为10.233.248.1(service 网段第1个ip)。</p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /srv/kubernetes/etc/ssl/apiserver-csr.conf
+<span style="color:#f92672">[</span> req <span style="color:#f92672">]</span>
+default_bits <span style="color:#f92672">=</span> <span style="color:#ae81ff">2048</span>
+prompt <span style="color:#f92672">=</span> no
+default_md <span style="color:#f92672">=</span> sha256
+req_extensions <span style="color:#f92672">=</span> req_ext
+distinguished_name <span style="color:#f92672">=</span> dn
+
+<span style="color:#f92672">[</span> dn <span style="color:#f92672">]</span>
+CN <span style="color:#f92672">=</span> kube-apiserver
+
+<span style="color:#f92672">[</span> req_ext <span style="color:#f92672">]</span>
+subjectAltName <span style="color:#f92672">=</span> @alt_names
+
+<span style="color:#f92672">[</span> alt_names <span style="color:#f92672">]</span>
+DNS.1 <span style="color:#f92672">=</span> localhost
+DNS.2 <span style="color:#f92672">=</span> kubernetes
+DNS.3 <span style="color:#f92672">=</span> kubernetes.default
+DNS.4 <span style="color:#f92672">=</span> kubernetes.default.svc
+DNS.5 <span style="color:#f92672">=</span> kubernetes.default.svc.cluster.local
+DNS.6 <span style="color:#f92672">=</span> lb-apiserver.kubernetes.local
+DNS.7 <span style="color:#f92672">=</span> lb-apiserver.kubernetes.local
+DNS.8 <span style="color:#f92672">=</span> master-01
+DNS.9 <span style="color:#f92672">=</span> master-02
+DNS.10 <span style="color:#f92672">=</span> master-03
+IP.1 <span style="color:#f92672">=</span> 127.0.0.1
+IP.2 <span style="color:#f92672">=</span> 10.200.192.1
+IP.3 <span style="color:#f92672">=</span> 10.10.10.1
+IP.4 <span style="color:#f92672">=</span> 10.10.10.2
+IP.5 <span style="color:#f92672">=</span> 10.10.10.3
+
+<span style="color:#f92672">[</span> v3_ext <span style="color:#f92672">]</span>
+keyUsage<span style="color:#f92672">=</span>digitalSignature,keyEncipherment
+extendedKeyUsage<span style="color:#f92672">=</span>serverAuth
+subjectAltName<span style="color:#f92672">=</span>@alt_names
+</code></pre></div><p><strong>生成证书</strong></p>
+<pre><code>&gt;&gt; /srv/kubernetes/tools/new_all_key.sh
+</code></pre><h4 id="启动-master-01">启动 master-01</h4>
+<pre><code>&gt;&gt; /srv/kubernetes/init.kubernetes start
+</code></pre><h4 id="检查node是否正常运行">检查node是否正常运行</h4>
+<pre><code>&gt;&gt; kubectl get node
+NAME        STATUS   ROLES    AGE   VERSION
+master-01   Ready    &lt;none&gt;   13s   v1.17.4
+
+&gt;&gt; kubectl get cs
+NAME                 STATUS    MESSAGE             ERROR
+scheduler            Healthy   ok
+controller-manager   Healthy   ok
+etcd-0               Healthy   {&quot;health&quot;:&quot;true&quot;}
+etcd-1               Healthy   {&quot;health&quot;:&quot;true&quot;}
+etcd-2               Healthy   {&quot;health&quot;:&quot;true&quot;}
+</code></pre><h4 id="同步文件至其它节点">同步文件至其它节点</h4>
+<pre><code>&gt;&gt; scp -r /srv/kubernetes-v1.17.4/ [host]:/srv/
+</code></pre><h3 id="master-节点二">master 节点二</h3>
+<h4 id="初始化-1">初始化</h4>
+<pre><code>&gt;&gt; ln -s /srv/kubernetes-v1.17.4/ /srv/kubernetes
+&gt;&gt; /srv/kubernetes/env-setup.sh master
+</code></pre><h4 id="修改配置文件-1">修改配置文件</h4>
+<blockquote>
+<p>修改kube-apiserver.env 、kubelet.env即可 （与节点一操作一样）</p>
+</blockquote>
+<h4 id="生成kubelctl配置文件">生成kubelctl配置文件</h4>
+<pre><code>&gt;&gt; cd /srv/kubernetes/tools/
+&gt;&gt; /srv/kubernetes/tools/create_kubeconfig-admin.sh
+</code></pre><h4 id="启动-master-02">启动 master-02</h4>
+<pre><code>&gt;&gt; /srv/kubernetes/init.kubernetes start
+</code></pre><h4 id="检查node是否正常">检查node是否正常</h4>
+<pre><code>&gt;&gt; kubectl get node
+NAME        STATUS   ROLES    AGE   VERSION
+master-01   Ready    &lt;none&gt;   38m   v1.17.4
+master-02   Ready    &lt;none&gt;   4s    v1.17.4
+</code></pre><h3 id="master-节点三">master 节点三</h3>
+<blockquote>
+<p>同节点二操作</p>
+</blockquote>
+<h3 id="calico网络组件安装">calico网络组件安装</h3>
+<blockquote>
+<p>etcd_endpoints 修改为：etcd地址
+CALICO_IPV4POOL_CIDR.value 修改为：pod的网段
+IP_AUTODETECTION_METHOD.value 修改为：主机网卡名称</p>
+</blockquote>
+<pre><code>&gt;&gt; cat /srv/kubernetes/etc/calico-etcd.yaml
+...
+  etcd_endpoints: &quot;https://10.10.10.1:2379,https://10.10.10.2:2379,https://10.10.10.3:2379&quot;
+...
+- name: CALICO_IPV4POOL_CIDR
+value: &quot;10.200.0.0/17&quot;
+
+...
+- name: IP_AUTODETECTION_METHOD
+   value: interface=ens33
+</code></pre><p><strong>生成calico所需secrets配置</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; /srv/kubernetes/tools/create_calico-etcd-secrets.sh
+secret/calico-etcd-secrets created
+</code></pre></div><p><strong>安装</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; kubectl apply -f /srv/kubernetes/etc/calico-etcd.yaml
+</code></pre></div><p><strong>检查</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; kubectl get pod -n kube-system  -o wide
+NAME                                      READY   STATUS    RESTARTS   AGE     IP           NODE        NOMINATED NODE   READINESS GATES
+calico-kube-controllers-5ff94b558-26cnt   1/1     Running   <span style="color:#ae81ff">0</span>          6m30s   10.10.10.3   master-03   &lt;none&gt;           &lt;none&gt;
+calico-node-f7vsf                         1/1     Running   <span style="color:#ae81ff">0</span>          6m43s   10.10.10.3   master-03   &lt;none&gt;           &lt;none&gt;
+calico-node-k6f2t                         1/1     Running   <span style="color:#ae81ff">0</span>          6m43s   10.10.10.2   master-02   &lt;none&gt;           &lt;none&gt;
+calico-node-rdwj6                         1/1     Running   <span style="color:#ae81ff">0</span>          6m43s   10.10.10.1   master-01   &lt;none&gt;           &lt;none&gt;
+</code></pre></div><p><strong>打开kubelet cni网络插件功能</strong>
+<strong>开启cni（所有节点）</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; sed -i <span style="color:#e6db74">&#39;s/^#KUBELET_NETWORK_PLUGIN/KUBELET_NETWORK_PLUGIN/&#39;</span> /srv/kubernetes/etc/kubelet.env     <span style="color:#75715e">#开启配置</span>
+&gt;&gt; systemctl restart kubelet.service        <span style="color:#75715e">#重启kubelet</span>
+</code></pre></div><p><strong>删除所有172.17.0.0/16 ip的pod</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; <span style="color:#66d9ef">for</span> i in <span style="color:#e6db74">`</span>kubectl get pod -n kube-system  -o wide|awk <span style="color:#e6db74">&#39;$6~/172.17/{print $1}&#39;</span><span style="color:#e6db74">`</span>;<span style="color:#66d9ef">do</span> kubectl delete pod -n kube-system $i;<span style="color:#66d9ef">done</span>
+</code></pre></div><p><strong>检查</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 确保ip变为10.200.0.0/17网段的</span>
+&gt;&gt; kubectl get pod -n kube-system  -o wide
+</code></pre></div><h3 id="安装coredns">安装coredns</h3>
+<p>修改clusterIP为：对应网段的ip。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /srv/kubernetes/etc/coredns.yaml
+...
+  clusterIP: 10.200.192.10
+</code></pre></div><h4 id="安装">安装</h4>
+<pre><code>&gt;&gt; kubectl apply -f /srv/kubernetes/etc/coredns.yaml
+serviceaccount/coredns created
+clusterrole.rbac.authorization.k8s.io/system:coredns created
+clusterrolebinding.rbac.authorization.k8s.io/system:coredns created
+configmap/coredns created
+deployment.apps/coredns created
+service/kube-dns created
+</code></pre><h4 id="dns自动伸缩">dns自动伸缩</h4>
+<pre><code>&gt;&gt; kubectl apply -f /srv/kubernetes/etc/dns-horizontal-autoscaler.yaml
+serviceaccount/coredns created
+clusterrole.rbac.authorization.k8s.io/system:coredns created
+clusterrolebinding.rbac.authorization.k8s.io/system:coredns created
+configmap/coredns created
+deployment.apps/coredns created
+service/kube-dns created
+&gt;&gt; kubectl apply -f /srv/kubernetes/etc/dns-horizontal-autoscaler.yaml
+serviceaccount/kube-dns-autoscaler created
+clusterrole.rbac.authorization.k8s.io/system:kube-dns-autoscaler created
+clusterrolebinding.rbac.authorization.k8s.io/system:kube-dns-autoscaler created
+deployment.apps/kube-dns-autoscaler created
+</code></pre><h4 id="检查-1">检查</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; kubectl get pod -n kube-system -o wide
+NAME                                      READY   STATUS    RESTARTS   AGE     IP             NODE        NOMINATED NODE   READINESS GATES
+calico-kube-controllers-5ff94b558-26cnt   1/1     Running   <span style="color:#ae81ff">0</span>          123m    10.10.10.3     master-03   &lt;none&gt;           &lt;none&gt;
+calico-node-f7vsf                         1/1     Running   <span style="color:#ae81ff">0</span>          123m    10.10.10.3     master-03   &lt;none&gt;           &lt;none&gt;
+calico-node-k6f2t                         1/1     Running   <span style="color:#ae81ff">0</span>          123m    10.10.10.2     master-02   &lt;none&gt;           &lt;none&gt;
+calico-node-rdwj6                         1/1     Running   <span style="color:#ae81ff">0</span>          123m    10.10.10.1     master-01   &lt;none&gt;           &lt;none&gt;
+coredns-bcf95d65b-6xh7l                   1/1     Running   <span style="color:#ae81ff">0</span>          2m28s   10.200.62.67   master-02   &lt;none&gt;           &lt;none&gt;
+coredns-bcf95d65b-wg4tg                   1/1     Running   <span style="color:#ae81ff">0</span>          107m    10.200.52.65   master-01   &lt;none&gt;           &lt;none&gt;
+kube-dns-autoscaler-76dd545665-4r5tq      1/1     Running   <span style="color:#ae81ff">0</span>          2m16s   10.200.52.66   master-01   &lt;none&gt;           &lt;none&gt;
+</code></pre></div><h3 id="配置master-labels及污点">配置master Labels及污点</h3>
+<h4 id="配置labels">配置labels</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; kubectl label nodes master-01 node-role.kubernetes.io/master<span style="color:#f92672">=</span>       <span style="color:#75715e">#master</span>
+&gt;&gt; kubectl label nodes master-02 node-role.kubernetes.io/node<span style="color:#f92672">=</span>         <span style="color:#75715e">#node</span>
+
+<span style="color:#75715e"># 删除标签</span>
+kubectl label nodes node-01 isIgress-
+
+</code></pre></div><h4 id="配置污点">配置污点</h4>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 因为master-02、03承担node的工作，所以不需要配置污点</span>
+&gt;&gt; kubectl taint nodes master-01 node-role.kubernetes.io/master<span style="color:#f92672">=</span>:NoSchedule
+node/ebj-master-01 tainted
+</code></pre></div><h4 id="检查labels">检查labels</h4>
+<pre><code>&gt;&gt; kubectl get node
+</code></pre><h3 id="新增node节点操作">新增node节点操作</h3>
+<p><strong>初始化</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; /srv/kubernetes-v1.17.4/env-setup.sh node
+</code></pre></div><p><strong>修改配置</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat /srv/kubernetes/etc/kubelet.env
+...
+KUBELET_ADDRESS<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;--address=20.1.100.4 --node-ip=20.1.100.4&#34;</span>    <span style="color:#75715e">#改成对应节点ip</span>
+...
+KUBELET_HOSTNAME<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;--hostname-override=ebj-node-01&#34;</span>             <span style="color:#75715e">#改成对应节点主机名</span>
+
+&gt;&gt; sed -i <span style="color:#e6db74">&#39;s/127.0.0.1/10.10.10.1/&#39;</span> /srv/kubernetes/etc/kubeconfig.conf /srv/kubernetes/etc/kubelet.conf        <span style="color:#75715e">#将127.0.0.1换成其中一个master的ip</span>
+</code></pre></div><p><strong>启动k8s</strong></p>
+<pre><code>&gt;&gt; /srv/kubernetes/init.kubernetes start
+</code></pre><p><strong>查看状态</strong></p>
+<pre><code>&gt;&gt; kubectl get node
+</code></pre><p><strong>添加node lables</strong></p>
+<pre><code>&gt;&gt; kubectl label nodes node-01 node-role.kubernetes.io/node=
+node/node-01 labeled
+
+&gt;&gt; kubectl get node
+NAME        STATUS   ROLES         AGE     VERSION
+master-01   Ready    master        18h     v1.17.4
+master-02   Ready    master,node   17h     v1.17.4
+master-03   Ready    master,node   17h     v1.17.4
+node-01     Ready    node          7m40s   v1.17.4
+</code></pre><p>至此 k8s集群基本部署完成</p>
+<h3 id="其它操作">其它操作</h3>
+<p><strong>删节点</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 排空节点</span>
+&gt;&gt; kubectl drain node-01 --ignore-daemonsets --delete-local-data
+
+<span style="color:#75715e"># 删除节点</span>
+&gt;&gt; kubectl delete nodes node-01
+
+<span style="color:#75715e"># 停k8s服务</span>
+&gt;&gt; systemctl stop kubelet.service kube-proxy.service
+&gt;&gt; systemctl disable kubelet.service kube-proxy.service
+
+<span style="color:#75715e"># master</span>
+&gt;&gt; systemctl stop kubelet.service kube-proxy.service kube-scheduler.service kube-controller-manager.service kube-apiserver.service
+&gt;&gt; systemctl disable kubelet.service kube-proxy.service kube-scheduler.service kube-controller-manager.service kube-apiserver.service
+
+<span style="color:#75715e"># 清ipvs规则</span>
+&gt;&gt; ipvsadm -C
+
+<span style="color:#75715e"># 重启服务器</span>
+&gt;&gt; reboot
+</code></pre></div><p><strong>重装</strong></p>
+<blockquote>
+<p>安装k8s操作错误，导致集群有问题需要重新安装</p>
+</blockquote>
+<pre><code># 停止所有节点的k8s服务
+&gt;&gt; /srv/kubernetes/init.kubernetes stop
+
+# 清空etcd
+&gt;&gt; export ETCDCTL_API=3
+&gt;&gt; for i in `etcdctl --cacert=/srv/etcd/etc/ssl/ca.crt --cert=/srv/etcd/etc/ssl/etcd.crt  --key=/srv/etcd/etc/ssl/etcd.key --endpoints=&quot;https://192.168.172.26:2379&quot;  --prefix --keys-only=true get &quot;&quot;`;do etcdctl --cacert=/srv/etcd/etc/ssl/ca.crt --cert=/srv/etcd/etc/ssl/etcd.crt  --key=/srv/etcd/etc/ssl/etcd.key --endpoints=&quot;https://192.168.172.26:2379&quot; del $i;done
+</code></pre>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

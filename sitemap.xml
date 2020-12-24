@@ -4,7 +4,47 @@
   
   <url>
     <loc>https://xiaowenxiao.github.io/categories/</loc>
-    <lastmod>2020-12-24T15:02:22+08:00</lastmod>
+    <lastmod>2020-12-24T15:12:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/categories/k8s/</loc>
+    <lastmod>2020-12-24T15:12:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/k8s%E7%9A%84%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5/</loc>
+    <lastmod>2020-12-24T15:12:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/</loc>
+    <lastmod>2020-12-24T15:12:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/ingress-nginx%E9%83%A8%E7%BD%B2/</loc>
+    <lastmod>2020-12-24T15:12:43+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/statefulset%E9%83%A8%E7%BD%B2jenkins/</loc>
+    <lastmod>2020-12-24T15:12:43+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/k8s%E9%9B%86%E7%BE%A4%E9%83%A8%E7%BD%B2/</loc>
+    <lastmod>2020-12-24T15:12:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/prometheus%E7%9B%91%E6%8E%A7%E5%91%8A%E8%AD%A6/</loc>
+    <lastmod>2020-12-24T15:12:42+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/harbor/</loc>
+    <lastmod>2020-12-24T15:12:41+08:00</lastmod>
   </url>
   
   <url>
@@ -13,18 +53,28 @@
   </url>
   
   <url>
-    <loc>https://xiaowenxiao.github.io/categories/k8s/</loc>
-    <lastmod>2020-12-24T15:02:22+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/</loc>
-    <lastmod>2020-12-24T15:02:22+08:00</lastmod>
+    <loc>https://xiaowenxiao.github.io/k8s%E6%9A%B4%E9%9C%B2%E5%A4%96%E9%83%A8%E5%BA%94%E7%94%A8%E6%9C%8D%E5%8A%A1/</loc>
+    <lastmod>2020-12-24T14:54:44+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://xiaowenxiao.github.io/categories/linux/</loc>
-    <lastmod>2020-12-23T16:16:02+08:00</lastmod>
+    <lastmod>2020-12-24T14:54:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/tags/</loc>
+    <lastmod>2020-12-24T14:54:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/tags/test/</loc>
+    <lastmod>2020-12-24T14:54:44+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/k8s%E5%91%BD%E4%BB%A4/</loc>
+    <lastmod>2020-12-24T14:47:26+08:00</lastmod>
   </url>
   
   <url>
@@ -60,11 +110,6 @@
   <url>
     <loc>https://xiaowenxiao.github.io/%E7%BC%96%E5%86%99%E5%8F%AF%E9%9D%A0%E7%9A%84bash%E8%84%9A%E6%9C%AC/</loc>
     <lastmod>2020-12-23T16:16:02+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/tags/</loc>
-    <lastmod>2020-12-23T15:53:42+08:00</lastmod>
   </url>
   
   <url>

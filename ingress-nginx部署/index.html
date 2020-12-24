@@ -1,0 +1,176 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> ingress-nginx部署 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="ingress-nginx部署">ingress-nginx部署</h1>
+<p>Ingress 与 ingress-controller
+Ingress 是 kubernetes 的一种资源对象，该对象允许外部访问 kubernetes 服务， 通过创建规则集合来配置访问权限，这些规则定义了哪些入站连接可以访问哪些服务。
+ingress-controller 是实现反向代理和负载均衡的程序，其功能是为了使 ingress 工作，通过解析 ingress 的规则来实现请求转发。集群内可以有多个 ingress-controller。</p>
+<p>Ingress 部署
+Ingress 部署的方式有多种，一般情况下需要考虑场景才选择部署方式。以下是笔者摘抄的常见部署方式：</p>
+<ul>
+<li>
+<p>Deployment + LoadBalancer
+如果要把 ingress 部署在公有云，那用这种方式比较合适。用 Deployment 部署 ingress-controller，创建一个 type 为 LoadBalancer 的 service 关联这组 pod。大部分公有云，都会为 LoadBalancer 的 service 自动创建一个负载均衡器，通常还绑定了公网地址。只要把域名解析指向该地址，就实现了集群服务的对外暴露。</p>
+</li>
+<li>
+<p>Deployment + NodePort
+同样用 deployment 模式部署 ingress-controller，并创建对应的服务，但是 type 为 NodePort。这样，ingress 就会暴露在集群节点 ip 的特定端口上。由于 nodeport 暴露的端口是随机端口，一般会在前面再搭建一套负载均衡器来转发请求。该方式一般用于宿主机是相对固定的环境 ip 地址不变的场景。NodePort 方式暴露 ingress 虽然简单方便，但是 NodePort 多了一层 NAT，在请求量级很大时可能对性能会有一定影响。</p>
+</li>
+<li>
+<p>DaemonSet + HostNetwork + nodeSelector
+用 DaemonSet 结合 nodeselector 来部署 ingress-controller 到特定的 node 上，然后使用 HostNetwork 直接把该 pod 与宿主机 node 的网络打通，直接使用宿主机的 80/433 端口就能访问服务。这时，ingress-controller 所在的 node 机器就很类似传统架构的边缘节点，比如机房入口的 nginx 服务器。该方式整个请求链路最简单，性能相对 NodePort 模式更好。缺点是由于直接利用宿主机节点的网络和端口，一个 node 只能部署一个 ingress-controller pod。比较适合大并发的生产环境使用。</p>
+</li>
+</ul>
+<p>在本次实验中也根据相关教程使用 DaemonSet+HostNetwork+nodeSelector 的方式部署。</p>
+<blockquote>
+<p>官方教程
+<a href="https://github.com/kubernetes/ingress-nginx/blob/master/docs/deploy/index.md">https://github.com/kubernetes/ingress-nginx/blob/master/docs/deploy/index.md</a></p>
+</blockquote>
+<h2 id="部署-ingress-controller">部署 ingress-controller</h2>
+<ul>
+<li>为需要部署为边缘节点的 node 打上 labe：</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; kubectl label node master-01 isIngress<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;true&#34;</span>
+&gt;&gt; kubectl label node master-02 isIngress<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;true&#34;</span>
+&gt;&gt; kubectl label node master-03 isIngress<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;true&#34;</span>
+</code></pre></div><p>在官方 yaml 配置文件中，相关资源的创建已经包含在内，但是我们需要使用 DaemonSet 的方式部署，就需要修改一小部分内容。下载官方 yaml：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-0.32.0/deploy/static/provider/cloud/deploy.yaml -O ingress-nginx.yaml
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">&gt;&gt; cat ingress-nginx.yaml</span>
+<span style="color:#ae81ff">···</span>
+<span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">apps/v1</span>
+<span style="color:#75715e"># kind: Deployment</span>
+<span style="color:#75715e"># 修改成 DaemonSet</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">DaemonSet</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-ingress-controller</span>
+  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">ingress-nginx</span>
+  <span style="color:#f92672">labels</span>:
+    <span style="color:#f92672">app.kubernetes.io/name</span>: <span style="color:#ae81ff">ingress-nginx</span>
+    <span style="color:#f92672">app.kubernetes.io/part-of</span>: <span style="color:#ae81ff">ingress-nginx</span>
+<span style="color:#ae81ff">···</span>
+
+<span style="color:#ae81ff">···</span>
+<span style="color:#75715e">#  注释掉 replicas</span>
+<span style="color:#75715e">#  replicas: 1</span>
+<span style="color:#ae81ff">···</span>
+
+<span style="color:#ae81ff">···</span>
+<span style="color:#f92672">spec</span>:
+  <span style="color:#f92672">dnsPolicy</span>: <span style="color:#ae81ff">ClusterFirst</span>
+  <span style="color:#75715e"># 选择打上 isIngress 标签的 node</span>
+  <span style="color:#f92672">nodeSelector</span>:
+    <span style="color:#f92672">isIngress</span>: <span style="color:#e6db74">&#34;true&#34;</span>
+  <span style="color:#75715e"># 暴露服务</span>
+  <span style="color:#f92672">hostNetwork</span>: <span style="color:#66d9ef">true</span>
+  <span style="color:#f92672">containers</span>:
+    - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">controller</span>
+      <span style="color:#f92672">image</span>: <span style="color:#ae81ff">quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.32.0</span>
+      <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+      <span style="color:#f92672">lifecycle</span>:
+        <span style="color:#f92672">preStop</span>:
+          <span style="color:#f92672">exec</span>:
+            <span style="color:#f92672">command</span>:
+              - <span style="color:#ae81ff">/wait-shutdown</span>
+<span style="color:#ae81ff">···</span>
+</code></pre></div><p>部署nginx-ingress-controller：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; kubectl apply -f ingress-nginx.yaml
+</code></pre></div><p>查看</p>
+<pre><code>&gt;&gt; kubectl get ds -n ingress-nginx
+&gt;&gt; kubectl get pods -n ingress-nginx
+</code></pre><h2 id="部署-ingress">部署 Ingress</h2>
+<p>编写 yaml 文件，指定路由规则</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">&gt;&gt; cat ingress-test.yaml</span>
+<span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">networking.k8s.io/v1beta1</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Ingress</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">nginx-ingress</span>
+  <span style="color:#f92672">annotations</span>:
+    <span style="color:#f92672">nginx.ingress.kubernetes.io/rewrite-target</span>: <span style="color:#ae81ff">/</span>
+<span style="color:#f92672">spec</span>:
+  <span style="color:#f92672">rules</span>:
+  - <span style="color:#f92672">host</span>: <span style="color:#ae81ff">nginx.tempdomain.com</span>
+    <span style="color:#f92672">http</span>:
+      <span style="color:#f92672">paths</span>:
+      - <span style="color:#f92672">path</span>: <span style="color:#ae81ff">/apple</span>
+        <span style="color:#f92672">backend</span>:
+          <span style="color:#f92672">serviceName</span>: <span style="color:#ae81ff">apple-service</span>
+          <span style="color:#f92672">servicePort</span>: <span style="color:#ae81ff">5678</span>
+      - <span style="color:#f92672">path</span>: <span style="color:#ae81ff">/banana</span>
+        <span style="color:#f92672">backend</span>:
+          <span style="color:#f92672">serviceName</span>: <span style="color:#ae81ff">banana-service</span>
+          <span style="color:#f92672">servicePort</span>: <span style="color:#ae81ff">5678</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">&gt;&gt; cat ingress-test1.yaml</span>
+<span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">extensions/v1beta1</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Ingress</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">external-ingress</span>
+  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">default</span>
+<span style="color:#f92672">spec</span>:
+  <span style="color:#f92672">rules</span>:
+  - <span style="color:#f92672">host</span>: <span style="color:#ae81ff">nginx.x.com</span>
+    <span style="color:#f92672">http</span>:
+      <span style="color:#f92672">paths</span>:
+      - <span style="color:#f92672">backend</span>:
+          <span style="color:#f92672">serviceName</span>: <span style="color:#ae81ff">nginx-service</span>
+          <span style="color:#f92672">servicePort</span>: <span style="color:#ae81ff">80</span>
+  - <span style="color:#f92672">host</span>: <span style="color:#ae81ff">jump.x.com</span>
+    <span style="color:#f92672">http</span>:
+      <span style="color:#f92672">paths</span>:
+      - <span style="color:#f92672">backend</span>:
+          <span style="color:#f92672">serviceName</span>: <span style="color:#ae81ff">jumpserver-service</span>
+          <span style="color:#f92672">servicePort</span>: <span style="color:#ae81ff">80</span>
+  - <span style="color:#f92672">host</span>: <span style="color:#ae81ff">harbor.x.com</span>
+    <span style="color:#f92672">http</span>:
+      <span style="color:#f92672">paths</span>:
+      - <span style="color:#f92672">backend</span>:
+          <span style="color:#f92672">serviceName</span>: <span style="color:#ae81ff">harbor-service</span>
+          <span style="color:#f92672">servicePort</span>: <span style="color:#ae81ff">8080</span>
+  - <span style="color:#f92672">host</span>: <span style="color:#ae81ff">jenkins.x.com</span>
+    <span style="color:#f92672">http</span>:
+      <span style="color:#f92672">paths</span>:
+      - <span style="color:#f92672">backend</span>:
+          <span style="color:#f92672">serviceName</span>: <span style="color:#ae81ff">jenkins</span>
+          <span style="color:#f92672">servicePort</span>: <span style="color:#ae81ff">80</span>
+</code></pre></div>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

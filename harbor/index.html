@@ -1,0 +1,121 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Harbor &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="harbor">Harbor</h1>
+<blockquote>
+<p>软件包：harbor-offline-installer-v2.0.0.tgz</p>
+</blockquote>
+<h2 id="harbor仓库安装">Harbor仓库安装</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># 解压</span>
+docker-compose，放到机器/usr/local/bin/目录
+&gt;&gt; wget https://storage.googleapis.com/harbor-releases/release-2.0.0/harbor-offline-installer-v2.0.0.tgz
+&gt;&gt; tar xf harbor-offline-installer-v2.0.0.tgz
+&gt;&gt; mv harbor /srv/harbor
+
+<span style="color:#75715e"># 修改配置</span>
+&gt;&gt; vim harbor.yml.tmpl
+<span style="color:#75715e"># 可以修改hostname、注释https、数据日志目录、端口、密码等</span>
+&gt;&gt; mv harbor.yml.tmpl harbor.yml
+
+<span style="color:#75715e"># 安装</span>
+&gt;&gt; ./prepare
+&gt;&gt; ./install.sh
+
+<span style="color:#75715e"># 默认账号密码：</span>
+&gt;&gt; admin
+&gt;&gt; Harbor12345
+
+<span style="color:#75715e"># 启/停</span>
+&gt;&gt; docker-compose start
+&gt;&gt; docker-compose stop
+</code></pre></div><h2 id="配置k8s集群拉取harbor仓库镜像">配置k8s集群拉取Harbor仓库镜像</h2>
+<ul>
+<li><strong>查看登录的秘钥数据</strong></li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; cat ~/.docker/config.json
+<span style="color:#f92672">{</span>
+	<span style="color:#e6db74">&#34;auths&#34;</span>: <span style="color:#f92672">{</span>
+		<span style="color:#e6db74">&#34;10.10.10.10:8080&#34;</span>: <span style="color:#f92672">{</span>
+			<span style="color:#e6db74">&#34;auth&#34;</span>: <span style="color:#e6db74">&#34;YWRtaW46SGFyYm9yMTIzNDU=&#34;</span>
+		<span style="color:#f92672">}</span>
+	<span style="color:#f92672">}</span>,
+	<span style="color:#e6db74">&#34;HttpHeaders&#34;</span>: <span style="color:#f92672">{</span>
+		<span style="color:#e6db74">&#34;User-Agent&#34;</span>: <span style="color:#e6db74">&#34;Docker-Client/19.03.9 (linux)&#34;</span>
+	<span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><ul>
+<li><strong>再对上面的config.json进行base64加密</strong></li>
+</ul>
+<pre><code>&gt;&gt; cat ~/.docker/config.json |base64 -w 0
+ewoJImF1dGhzIjogewoJCSIxMC4xMC4xMC4xMDo4MDgwIjogewoJCQkiYXV0aCI6ICJZV1J0YVc0NlNHRnlZbTl5TVRJek5EVT0iCgkJfQoJfSwKCSJIdHRwSGVhZGVycyI6IHsKCQkiVXNlci1BZ2VudCI6ICJEb2NrZXItQ2xpZW50LzE5LjAzLjkgKGxpbnV4KSIKCX0KfQ==
+</code></pre><ul>
+<li><strong>创建secret</strong></li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">&gt;&gt; cat harbor-secret.yaml</span>
+<span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+<span style="color:#f92672">data</span>:
+  <span style="color:#f92672">.dockerconfigjson</span>: <span style="color:#ae81ff">ewoJImF1dGhzIjogewoJCSIxMC4xMC4xMC4xMDo4MDgwIjogewoJCQkiYXV0aCI6ICJZV1J0YVc0NlNHRnlZbTl5TVRJek5EVT0iCgkJfQoJfSwKCSJIdHRwSGVhZGVycyI6IHsKCQkiVXNlci1BZ2VudCI6ICJEb2NrZXItQ2xpZW50LzE5LjAzLjkgKGxpbnV4KSIKCX0KfQ==</span>
+<span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Secret</span>
+<span style="color:#f92672">metadata</span>:
+  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">harbor</span>
+  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">default</span>
+<span style="color:#f92672">type</span>: <span style="color:#ae81ff">kubernetes.io/dockerconfigjson</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">&gt;&gt; kubectl apply -f harbor-secret.yaml
+</code></pre></div><ul>
+<li><strong>指定 imagePullSecrets 指标，指定刚才创建的秘钥</strong></li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml">   <span style="color:#ae81ff">...</span>
+      <span style="color:#f92672">containers</span>:
+      - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">tomcat</span>
+        <span style="color:#75715e">#image: tomcat:8.0.52-alpine</span>
+        <span style="color:#f92672">image</span>: <span style="color:#ae81ff">tcloud.hub/kstest/tomcat:7.0-jre8-alpine-tc</span>
+        <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">Always</span>
+        <span style="color:#f92672">ports</span>:
+        - <span style="color:#f92672">containerPort</span>: <span style="color:#ae81ff">8080</span> <span style="color:#75715e"># 容器应用监听的端口号</span>
+          <span style="color:#f92672">hostPort</span>: <span style="color:#ae81ff">8088</span>
+      <span style="color:#f92672">imagePullSecrets</span>:
+      - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">harbor</span>
+   <span style="color:#ae81ff">...</span>
+</code></pre></div>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

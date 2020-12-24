@@ -1,0 +1,107 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> k8s的健康检查 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="k8s的健康检查">k8s的健康检查</h1>
+<p><strong>默认的健康检查</strong>
+强大的自愈能力是 Kubernetes 这类容器编排引擎的一个重要特性。自愈的默认实现方式是自动重启发生故障的容器。除此之外，用户还可以利用 Liveness 和 Readiness 探测机制设置更精细的健康检查，进而实现如下需求：</p>
+<p>零停机部署。
+避免部署无效的镜像。
+更加安全的滚动升级。</p>
+<p>每个容器启动时都会执行一个进程，此进程由 Dockerfile 的 CMD 或 ENTRYPOINT 指定。如果进程退出时返回码非零，则认为容器发生故障，Kubernetes 就会根据 restartPolicy 重启容器。</p>
+<p><strong>Liveness探测</strong>
+Liveness 探测让用户可以自定义判断容器是否健康的条件。如果探测失败，Kubernetes 就会重启容器。</p>
+<p><strong>Readiness探测</strong>
+用户通过 Liveness 探测可以告诉 Kubernetes 什么时候通过重启容器实现自愈；Readiness 探测则是告诉 Kubernetes 什么时候可以将容器加入到 Service 负载均衡池中，对外提供服务。</p>
+<p>下面对 Liveness 探测和 Readiness 探测做个比较：
+Liveness 探测和 Readiness 探测是两种 Health Check 机制，如果不特意配置，Kubernetes 将对两种探测采取相同的默认行为，即通过判断容器启动进程的返回值是否为零来判断探测是否成功。</p>
+<p>两种探测的配置方法完全一样，支持的配置参数也一样。不同之处在于探测失败后的行为：Liveness 探测是重启容器；Readiness 探测则是将容器设置为不可用，不接收 Service 转发的请求。</p>
+<p>Liveness 探测和 Readiness 探测是独立执行的，二者之间没有依赖，所以可以单独使用，也可以同时使用。用 Liveness 探测判断容器是否需要重启以实现自愈；用 Readiness 探测判断容器是否已经准备好对外提供服务。</p>
+<p><strong>问题：pod滚动更新后，存在几秒的流量丢失</strong>
+现象：新pod创建好了，但是会存在几秒钟的访问不了
+原因：pod滚动更新完后，kube-proxy（不是实时）没有及时向kube-apiserver获取更新
+后pod的ip信息，iptables（或者ipvs）的规则还是原来的规则（不是最新规则），会存
+在时间差</p>
+<blockquote>
+<p>容器停止后加个钩子，容器停止前休眠5-10秒，减少与kube-proxy刷新路由规则的时间差</p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">lifecycle</span>:
+  <span style="color:#f92672">preStop</span>:
+    <span style="color:#f92672">exec</span>:
+      <span style="color:#f92672">command</span>:
+        -<span style="color:#ae81ff">sh</span>
+        --<span style="color:#ae81ff">c</span>
+        - <span style="color:#e6db74">&#34;sleep 5&#34;</span>
+</code></pre></div><p><strong>服务端口健康检查</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">livenessProbe</span>:
+  <span style="color:#f92672">failureThreshold</span>: <span style="color:#ae81ff">5</span>
+  <span style="color:#f92672">initialDelaySeconds</span>: <span style="color:#ae81ff">30</span>
+  <span style="color:#f92672">periodSeconds</span>: <span style="color:#ae81ff">10</span>
+  <span style="color:#f92672">successThreshold</span>: <span style="color:#ae81ff">1</span>
+  <span style="color:#f92672">tcpSocket</span>:
+    <span style="color:#f92672">host</span>: <span style="color:#ae81ff">192.168.10.19</span>
+    <span style="color:#f92672">port</span>: <span style="color:#ae81ff">21001</span>
+  <span style="color:#f92672">timeoutSeconds</span>: <span style="color:#ae81ff">5</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#f92672">readinessProbe</span>:
+  <span style="color:#f92672">failureThreshold</span>: <span style="color:#ae81ff">3</span>
+  <span style="color:#f92672">periodSeconds</span>: <span style="color:#ae81ff">10</span>
+  <span style="color:#f92672">successThreshold</span>: <span style="color:#ae81ff">1</span>
+  <span style="color:#f92672">tcpSocket</span>:
+    <span style="color:#f92672">host</span>: <span style="color:#ae81ff">192.168.10.19</span>
+    <span style="color:#f92672">port</span>: <span style="color:#ae81ff">21001</span>
+  <span style="color:#f92672">timeoutSeconds</span>: <span style="color:#ae81ff">1</span>
+</code></pre></div><blockquote>
+<p>initialDelaySeconds：检查开始执行的时间，以容器启动完成为起点计算
+periodSeconds：检查执行的周期，默认为10秒，最小为1秒
+timeoutSeconds：检查超时的时间，默认为1秒，最小为1秒
+successThreshold：从上次检查失败后重新认定检查成功的检查次数阈值（必须是连续成功），默认为1
+failureThreshold：从上次检查成功后认定检查失败的检查次数阈值（必须是连续失败），默认为1
+httpGet的属性
+host：主机名或IP
+scheme：链接类型，HTTP或HTTPS，默认为HTTP
+path：请求路径
+httpHeaders：自定义请求头
+port：请求端口</p>
+</blockquote>
+
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>
