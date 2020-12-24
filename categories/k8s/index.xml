@@ -1,0 +1,22 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>k8s on x&#39;Blog</title>
+    <link>https://xiaowenxiao.github.io/categories/k8s/</link>
+    <description>Recent content in k8s on x&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Thu, 24 Dec 2020 15:02:22 +0800</lastBuildDate>
+    
+        <atom:link href="https://xiaowenxiao.github.io/categories/k8s/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>EFK部署</title>
+      <link>https://xiaowenxiao.github.io/efk%E9%83%A8%E7%BD%B2/</link>
+      <pubDate>Thu, 24 Dec 2020 15:02:22 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/efk%E9%83%A8%E7%BD%B2/</guid>
+      <description>EFK部署 参考链接： 阳明的博客</description>
+    </item>
+    
+  </channel>
+</rss>
