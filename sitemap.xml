@@ -4,7 +4,22 @@
   
   <url>
     <loc>https://xiaowenxiao.github.io/categories/</loc>
-    <lastmod>2020-12-24T15:12:44+08:00</lastmod>
+    <lastmod>2020-12-24T15:38:21+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/hugo%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83%E8%84%9A%E6%9C%AC/</loc>
+    <lastmod>2020-12-24T15:38:21+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/categories/linux/</loc>
+    <lastmod>2020-12-24T15:38:21+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/</loc>
+    <lastmod>2020-12-24T15:38:21+08:00</lastmod>
   </url>
   
   <url>
@@ -14,11 +29,6 @@
   
   <url>
     <loc>https://xiaowenxiao.github.io/k8s%E7%9A%84%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5/</loc>
-    <lastmod>2020-12-24T15:12:44+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/</loc>
     <lastmod>2020-12-24T15:12:44+08:00</lastmod>
   </url>
   
@@ -60,11 +70,6 @@
   <url>
     <loc>https://xiaowenxiao.github.io/k8s%E5%91%BD%E4%BB%A4/</loc>
     <lastmod>2020-12-24T14:47:26+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/categories/linux/</loc>
-    <lastmod>2020-12-23T16:16:02+08:00</lastmod>
   </url>
   
   <url>
@@ -120,11 +125,6 @@
   <url>
     <loc>https://xiaowenxiao.github.io/about/</loc>
     <lastmod>2020-12-15T15:21:08+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/hugo%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83%E8%84%9A%E6%9C%AC/</loc>
-    <priority>0</priority>
   </url>
   
 </urlset>

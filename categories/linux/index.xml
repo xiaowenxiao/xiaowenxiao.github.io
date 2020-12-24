@@ -4,10 +4,19 @@
     <link>https://xiaowenxiao.github.io/categories/linux/</link>
     <description>Recent content in linux on x&#39;Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Wed, 23 Dec 2020 16:16:02 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 24 Dec 2020 15:38:21 +0800</lastBuildDate>
     
         <atom:link href="https://xiaowenxiao.github.io/categories/linux/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>hugo自动发布脚本</title>
+      <link>https://xiaowenxiao.github.io/hugo%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83%E8%84%9A%E6%9C%AC/</link>
+      <pubDate>Thu, 24 Dec 2020 15:38:21 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/hugo%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83%E8%84%9A%E6%9C%AC/</guid>
+      <description>hugo自动发布脚本 #!/bin/bash set -x FILE_PATH=$(pwd) usage() { echo &amp;#34;Usage: $0-c [CATEGORIES] -t [Tags] -m [MESSAGE] -f [FILE_LIST]&amp;#34; exit 0 } input_yaml() { FILE_NAME=$(echo ${FILE##*/}) NAME=$(echo &amp;#34;${FILE_NAME}&amp;#34; | tr &amp;#39;.md&amp;#39; &amp;#39; &amp;#39;) DATE=$(date +&amp;#34;%Y-%m-%d&amp;#34;)T$(date +&amp;#34;%H:%M:%S&amp;#34;)+08:00 cd ${FILE_PATH} grep title ${FILE} if [[ $? != 0 ]];then if [[ ! ${Tags} ]];then sed -i &amp;#34;1i---\ntitle: ${NAME}\ndate: ${DATE}\ndraft: false\nCategories: [&amp;#34;${CATEGORIES}&amp;#34;]\n---&amp;#34; ${FILE} else sed -i</description>
+    </item>
     
     <item>
       <title>Linux文件描述符</title>
