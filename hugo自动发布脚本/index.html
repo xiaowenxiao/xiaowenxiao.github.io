@@ -1,0 +1,119 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>  &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="hugo自动发布脚本">hugo自动发布脚本</h1>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e">#!/bin/bash
+</span><span style="color:#75715e"></span>set -x
+FILE_PATH<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>pwd<span style="color:#66d9ef">)</span>
+
+usage<span style="color:#f92672">()</span>
+<span style="color:#f92672">{</span>
+    echo <span style="color:#e6db74">&#34;Usage: </span>$0<span style="color:#e6db74"> -c [CATEGORIES] -t [Tags] -m [MESSAGE] -f [FILE_LIST]&#34;</span>
+    exit <span style="color:#ae81ff">0</span>
+<span style="color:#f92672">}</span>
+
+input_yaml<span style="color:#f92672">()</span>
+<span style="color:#f92672">{</span>
+	FILE_NAME<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>echo <span style="color:#e6db74">${</span>FILE##*/<span style="color:#e6db74">}</span><span style="color:#66d9ef">)</span>
+	NAME<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>echo <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>FILE_NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> | tr <span style="color:#e6db74">&#39;.md&#39;</span> <span style="color:#e6db74">&#39; &#39;</span><span style="color:#66d9ef">)</span>
+	DATE<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>date +<span style="color:#e6db74">&#34;%Y-%m-%d&#34;</span><span style="color:#66d9ef">)</span>T<span style="color:#66d9ef">$(</span>date +<span style="color:#e6db74">&#34;%H:%M:%S&#34;</span><span style="color:#66d9ef">)</span>+08:00
+
+	cd <span style="color:#e6db74">${</span>FILE_PATH<span style="color:#e6db74">}</span>
+	grep title <span style="color:#e6db74">${</span>FILE<span style="color:#e6db74">}</span>
+	<span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> $? !<span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">]]</span>;<span style="color:#66d9ef">then</span>
+		<span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> ! <span style="color:#e6db74">${</span>Tags<span style="color:#e6db74">}</span> <span style="color:#f92672">]]</span>;<span style="color:#66d9ef">then</span>
+			sed -i <span style="color:#e6db74">&#34;1i---\ntitle: </span><span style="color:#e6db74">${</span>NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">\ndate: </span><span style="color:#e6db74">${</span>DATE<span style="color:#e6db74">}</span><span style="color:#e6db74">\ndraft: false\nCategories: [&#34;</span><span style="color:#e6db74">${</span>CATEGORIES<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;]\n---&#34;</span> <span style="color:#e6db74">${</span>FILE<span style="color:#e6db74">}</span>
+		<span style="color:#66d9ef">else</span>
+			sed -i <span style="color:#e6db74">&#34;1i---\ntitle: </span><span style="color:#e6db74">${</span>NAME<span style="color:#e6db74">}</span><span style="color:#e6db74">\ndate: </span><span style="color:#e6db74">${</span>DATE<span style="color:#e6db74">}</span><span style="color:#e6db74">\ndraft: false\nCategories: [&#34;</span><span style="color:#e6db74">${</span>CATEGORIES<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;]\nTags: [&#34;</span><span style="color:#e6db74">${</span>Tags<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;]\n---&#34;</span> <span style="color:#e6db74">${</span>FILE<span style="color:#e6db74">}</span>
+		<span style="color:#66d9ef">fi</span>
+	<span style="color:#66d9ef">fi</span>
+<span style="color:#f92672">}</span>
+
+move<span style="color:#f92672">()</span>
+<span style="color:#f92672">{</span>
+	cp -rf <span style="color:#e6db74">${</span>FILE<span style="color:#e6db74">}</span> /opt/myBlog/content/
+	cd /opt/myBlog/
+	rm -rf public
+	rm -rf xiaowenxiao.github.io/*
+	hugo
+	mv public/* xiaowenxiao.github.io/
+<span style="color:#f92672">}</span>
+
+push<span style="color:#f92672">(){</span>
+	cd /opt/myBlog/xiaowenxiao.github.io/
+	git add -A
+	git commit -m <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>MESSAGE<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+	git push
+<span style="color:#f92672">}</span>
+
+main<span style="color:#f92672">()</span>
+<span style="color:#f92672">{</span>
+	echo <span style="color:#e6db74">${</span>FILE_LIST<span style="color:#e6db74">}</span>
+	REAL_FILE_LIST<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>echo <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>FILE_LIST<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> | tr <span style="color:#e6db74">&#39;,&#39;</span> <span style="color:#e6db74">&#39; &#39;</span><span style="color:#66d9ef">)</span>
+	echo <span style="color:#e6db74">${</span>REAL_FILE_LIST<span style="color:#e6db74">}</span>
+	<span style="color:#66d9ef">for</span> FILE in <span style="color:#e6db74">${</span>REAL_FILE_LIST<span style="color:#e6db74">}</span>;<span style="color:#66d9ef">do</span>
+	  input_yaml
+	  move
+	<span style="color:#66d9ef">done</span>
+	push
+<span style="color:#f92672">}</span>
+
+<span style="color:#66d9ef">while</span> getopts <span style="color:#e6db74">&#39;c:t:m:f:h&#39;</span> OPT; <span style="color:#66d9ef">do</span>
+    <span style="color:#66d9ef">case</span> $OPT in
+        c<span style="color:#f92672">)</span> CATEGORIES<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$OPTARG<span style="color:#e6db74">&#34;</span>;;
+        t<span style="color:#f92672">)</span> Tags<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$OPTARG<span style="color:#e6db74">&#34;</span>;;
+        m<span style="color:#f92672">)</span> MESSAGE<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$OPTARG<span style="color:#e6db74">&#34;</span>;;
+        f<span style="color:#f92672">)</span> FILE_LIST<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$OPTARG<span style="color:#e6db74">&#34;</span>;;
+        h<span style="color:#f92672">)</span> usage;;
+        ?<span style="color:#f92672">)</span> usage;;
+    <span style="color:#66d9ef">esac</span>
+<span style="color:#66d9ef">done</span>
+
+<span style="color:#f92672">[</span> -z <span style="color:#e6db74">${</span>CATEGORIES<span style="color:#e6db74">}</span> <span style="color:#f92672">]</span> <span style="color:#f92672">&amp;&amp;</span> usage
+<span style="color:#f92672">[</span> -z <span style="color:#e6db74">${</span>MESSAGE<span style="color:#e6db74">}</span> <span style="color:#f92672">]</span> <span style="color:#f92672">&amp;&amp;</span> usage
+<span style="color:#f92672">[</span> -z <span style="color:#e6db74">${</span>FILE_LIST<span style="color:#e6db74">}</span> <span style="color:#f92672">]</span> <span style="color:#f92672">&amp;&amp;</span> usage
+
+main
+</code></pre></div>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>
