@@ -4,10 +4,19 @@
     <link>https://xiaowenxiao.github.io/categories/linux/</link>
     <description>Recent content in linux on x&#39;Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Wed, 23 Dec 2020 16:16:02 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 24 Dec 2020 11:45:09 +0800</lastBuildDate>
     
         <atom:link href="https://xiaowenxiao.github.io/categories/linux/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title></title>
+      <link>https://xiaowenxiao.github.io/test/</link>
+      <pubDate>Thu, 24 Dec 2020 11:45:09 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/test/</guid>
+      <description>dnsajkdnasjkndaskndksjanj</description>
+    </item>
     
     <item>
       <title>Linux文件描述符</title>

@@ -3,13 +3,23 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://xiaowenxiao.github.io/test/</loc>
+    <lastmod>2020-12-24T11:45:09+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://xiaowenxiao.github.io/categories/</loc>
-    <lastmod>2020-12-23T16:16:02+08:00</lastmod>
+    <lastmod>2020-12-24T11:45:09+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://xiaowenxiao.github.io/categories/linux/</loc>
-    <lastmod>2020-12-23T16:16:02+08:00</lastmod>
+    <lastmod>2020-12-24T11:45:09+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/</loc>
+    <lastmod>2020-12-24T11:45:09+08:00</lastmod>
   </url>
   
   <url>
@@ -24,11 +34,6 @@
   
   <url>
     <loc>https://xiaowenxiao.github.io/systemd%E6%9C%8D%E5%8A%A1/</loc>
-    <lastmod>2020-12-23T16:16:02+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/</loc>
     <lastmod>2020-12-23T16:16:02+08:00</lastmod>
   </url>
   
