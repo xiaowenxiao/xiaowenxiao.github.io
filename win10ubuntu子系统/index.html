@@ -1,0 +1,134 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> win10配置ubuntu子系统 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h2 id="配置达到的效果">配置达到的效果</h2>
+<p>子系统随win10开机一起启动（跟未装子系统开机时间比较无明显差异）</p>
+<p>ssh服务配置开机自启，无需其他操作开机直接连接xhell使用</p>
+<h2 id="系统信息">系统信息</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e">#======================================================</span>
+<span style="color:#75715e"># 系统版本</span>
+
+<span style="color:#75715e"># Windows：</span>
+<span style="color:#75715e"># OS 名称:          Microsoft Windows 10 专业版</span>
+<span style="color:#75715e"># OS 版本:          10.0.18363 暂缺 Build 18363</span>
+<span style="color:#75715e"># OS 制造商:        Microsoft Corporation</span>
+<span style="color:#75715e"># OS 配置:          独立工作站</span>
+<span style="color:#75715e"># OS 构建类型:      Multiprocessor Free</span>
+
+<span style="color:#75715e"># Linux：</span>
+<span style="color:#75715e"># NAME=&#34;Ubuntu&#34;</span>
+<span style="color:#75715e"># VERSION=&#34;20.04.1 LTS (Focal Fossa)&#34;</span>
+<span style="color:#75715e">#======================================================</span>
+</code></pre></div><h2 id="win10安装ubuntu子系统">win10安装Ubuntu子系统</h2>
+<p>略</p>
+<h2 id="ssh配置">ssh配置</h2>
+<p>安装并配置ssh允许远程登录（当前用户下，这里当前用户为x）</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo apt-get remove openssh-server
+sudo apt-get install openssh-server
+cd /home/x/.ssh
+
+vim /etc/ssh/sshd_config 
+PermitRootLogin yes
+PasswordAuthentication yes 
+</code></pre></div><p>授权普通用户使用sudo不用输入密码</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">vim /etc/sudoers
+x   	 ALL<span style="color:#f92672">=(</span>ALL:ALL<span style="color:#f92672">)</span> NOPASSWD:ALL
+<span style="color:#75715e">#%sudo   ALL=(ALL:ALL) NOPASSWD:ALL</span>
+</code></pre></div><h2 id="windows开机启动子系统ssh">windows开机启动子系统ssh</h2>
+<p>cmd=&gt;shell:startup</p>
+<p>在开机启动目录下新建wls_sshd.vbs脚本并添加下面内容：</p>
+<pre><code>set ws=WScript.CreateObject(&quot;WScript.Shell&quot;)
+ws.Run &quot;ubuntu.exe run sudo service ssh start&quot;,0
+</code></pre><h2 id="更换清华源">更换清华源</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">vi /etc/apt/sources.list 
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-backports main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-security main restricted universe multiverse
+apt update
+</code></pre></div><h2 id="docker安装">docker安装</h2>
+<p><a href="https://docs.docker.com/engine/install/ubuntu/">官方文档</a></p>
+<p>windows10子系统有其特殊性，需要ubuntu作为docker客户端，windows上安装的docker for desktop作为服务端</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">apt-cache madison docker-ce-cli
+sudo apt-get install docker-ce-cli<span style="color:#f92672">=</span>&lt;VERSION_STRING&gt; containerd.io
+</code></pre></div><blockquote>
+<p>问题1：报错&quot;gpg: can&rsquo;t connect to the agent: IPC connect call failed&quot;</p>
+<p>解决：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sudo apt remove gpg
+sudo apt install gnupg
+</code></pre></div></blockquote>
+<p><strong>window安装docker</strong></p>
+<p>略</p>
+<blockquote>
+<p>问题2：安装docker for windows报错：Cannot enable Hyper-V service</p>
+<p>解决：</p>
+<pre><code>bcdedit /set hypervisorlaunchtype Auto
+</code></pre></blockquote>
+<p>配置及刷新环境变量</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">echo <span style="color:#e6db74">&#34;export DOCKER_HOST=&#39;tcp://0.0.0.0:2375&#39;&#34;</span> &gt;&gt; ~/.bashrc
+source ~/.bashrc
+</code></pre></div><h2 id="vim配置">vim配置</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">vim /etc/vim/vimrc
+set nocompatible 
+set autoindent
+set cindent
+set nu
+set ai! 
+set tabstop<span style="color:#f92672">=</span><span style="color:#ae81ff">4</span> 
+set shiftwidth<span style="color:#f92672">=</span><span style="color:#ae81ff">4</span>   
+set smartindent
+<span style="color:#75715e"># syntax on       支持语法高亮</span>
+<span style="color:#75715e"># set nu          显示行号</span>
+<span style="color:#75715e"># set nonu      不显示行号</span>
+<span style="color:#75715e"># set ai          设置自动缩进</span>
+<span style="color:#75715e"># set shiftwidth=4   设置自动缩进 4 个空格, 当然要设自动缩进先.</span>
+<span style="color:#75715e"># set sts=4          即设置 softtabstop 为 4\. 输入 tab 后就跳了 4 格.</span>
+<span style="color:#75715e"># set tabstop=4      实际的 tab 即为 4 个空格, 而不是缺省的 8 个.</span>
+<span style="color:#75715e"># set expandtab      在输入 tab 后, vim 用恰当的空格来填充这个 tab.</span>
+<span style="color:#75715e"># set hls 打开搜索高亮</span>
+<span style="color:#75715e"># set nohls 取消搜索高亮 </span>
+<span style="color:#75715e"># set list 显示特殊字符</span>
+<span style="color:#75715e"># set nolist </span>
+</code></pre></div>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>
