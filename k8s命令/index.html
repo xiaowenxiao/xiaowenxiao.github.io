@@ -1,0 +1,148 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> K8s命令 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="k8s命令">K8s命令</h1>
+<ul>
+<li>创建</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">kubectl run nginx --replicas=1 --labels=&#34;app=nginx-example&#34; --image=nginx:1.10 --port=80</span>
+</code></pre></div><ul>
+<li>查看</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">kubectl get deploy</span>
+<span style="color:#ae81ff">kubectl get pods --show-labels</span>
+<span style="color:#ae81ff">kubectl get pods -l app=example</span>
+<span style="color:#ae81ff">kubectl get pods -o wide</span>
+</code></pre></div><ul>
+<li>发布</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">kubectl expose deployment nginx --port=88 --type=NodePort --target-port=80 --name=nginx-service</span>
+<span style="color:#ae81ff">kubectl describe service nginx-service</span>
+</code></pre></div><ul>
+<li>故障排查</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">kubectl describe TYPE NAME_PREFIX</span>
+<span style="color:#ae81ff">kubectl logs nginx-xxx</span>
+<span style="color:#ae81ff">kubectl exec -ti nginx-xxx bash</span>
+</code></pre></div><ul>
+<li>更新</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">kubectl set image deployment/nginx nginx=nginx:1.11</span>
+<span style="color:#ae81ff">kubectl edit deployment/nginx</span>
+<span style="color:#ae81ff">kubectl rollout status deployment/nginx</span>
+<span style="color:#ae81ff">kubectl rollout history deployment/nginx</span>
+<span style="color:#ae81ff">kubectl rollout history deployment/nginx --revision=3</span>
+<span style="color:#75715e"># 伸缩</span>
+<span style="color:#ae81ff">kubectl scale deployment nginx --replicas=10</span>
+</code></pre></div><ul>
+<li>回滚</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">kubectl rollout undo deployment/nginx-deployment</span> <span style="color:#75715e">#默认恢复上一版本</span>
+<span style="color:#ae81ff">kubectl rollout undo deployment/nginx-deployment  --to-revision=3</span> <span style="color:#75715e">#恢复指定版本</span>
+</code></pre></div><ul>
+<li>删除</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">kubectl delete deploy/nginx</span>
+<span style="color:#ae81ff">kubectl delete svc/nginx-service</span>
+</code></pre></div><ul>
+<li>查看版本</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm version</span>
+</code></pre></div><ul>
+<li>查看当前安装的charts</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm list</span>
+</code></pre></div><ul>
+<li>查询 charts</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm search redis</span>
+</code></pre></div><ul>
+<li>安装charts</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm install --name redis --namespaces prod bitnami/redis</span>
+</code></pre></div><ul>
+<li>查看charts状态</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm status redis</span>
+</code></pre></div><ul>
+<li>删除charts</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm delete --purge redis</span>
+</code></pre></div><ul>
+<li>增加repo</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm repo add stable https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts</span>
+
+<span style="color:#ae81ff">helm repo add --username admin --password password myharbor https://harbor.qing.cn/chartrepo/charts</span>
+</code></pre></div><ul>
+<li>更新repo仓库资源</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm repo update</span>
+</code></pre></div><ul>
+<li>创建charts</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm create helm_charts</span>
+</code></pre></div><ul>
+<li>测试charts语法</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm lint</span>
+</code></pre></div><ul>
+<li>打包charts</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">cd helm_charts &amp;&amp; helm package ./</span>
+</code></pre></div><ul>
+<li>查看生成的yaml文件</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm  template  helm_charts-0.1.1.tgz</span>
+</code></pre></div><ul>
+<li>更新image</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm upgrade --set image.tag=&#39;v2019-05-09-18-48-40&#39; study-api-en-oral myharbor/study-api-en-oral</span>
+</code></pre></div><ul>
+<li>回滚relase</li>
+</ul>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-yaml" data-lang="yaml"><span style="color:#ae81ff">helm hist study-api-en-oral</span>
+<span style="color:#ae81ff">helm rollback study-api-en-oral 4</span>
+</code></pre></div>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

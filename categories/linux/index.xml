@@ -4,10 +4,19 @@
     <link>https://xiaowenxiao.github.io/categories/linux/</link>
     <description>Recent content in linux on x&#39;Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Thu, 24 Dec 2020 12:16:34 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 24 Dec 2020 14:47:26 +0800</lastBuildDate>
     
         <atom:link href="https://xiaowenxiao.github.io/categories/linux/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>K8s命令</title>
+      <link>https://xiaowenxiao.github.io/k8s%E5%91%BD%E4%BB%A4/</link>
+      <pubDate>Thu, 24 Dec 2020 14:47:26 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/k8s%E5%91%BD%E4%BB%A4/</guid>
+      <description>K8s命令 创建 kubectl run nginx --replicas=1 --labels=&amp;#34;app=nginx-example&amp;#34; --image=nginx:1.10 --port=80 查看 kubectl get deploy kubectl get pods --show-labels kubectl get pods -l app=example kubectl get pods -o wide 发布 kubectl expose deployment nginx --port=88 --type=NodePort --target-port=80 --name=nginx-service kubectl describe service nginx-service 故障排查 kubectl describe TYPE NAME_PREFIX kubectl logs nginx-xxx kubectl exec -ti nginx-xxx bash 更新 kubectl set image deployment/nginx nginx=nginx:1.11</description>
+    </item>
     
     <item>
       <title>test</title>
