@@ -1,83 +1,83 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>linux on x&#39;Blog</title>
-    <link>http://xiaowenxiao.github.io/categories/linux/</link>
+    <link>https://xiaowenxiao.github.io/categories/linux/</link>
     <description>Recent content in linux on x&#39;Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Wed, 23 Dec 2020 16:16:02 +0800</lastBuildDate>
     
-        <atom:link href="http://xiaowenxiao.github.io/categories/linux/index.xml" rel="self" type="application/rss+xml" />
+        <atom:link href="https://xiaowenxiao.github.io/categories/linux/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Linux文件描述符</title>
-      <link>http://xiaowenxiao.github.io/linux%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/</link>
+      <link>https://xiaowenxiao.github.io/linux%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/</link>
       <pubDate>Wed, 23 Dec 2020 16:16:02 +0800</pubDate>
       
-      <guid>http://xiaowenxiao.github.io/linux%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/</guid>
+      <guid>https://xiaowenxiao.github.io/linux%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/</guid>
       <description>文件描述符 文件描述符的定义 文件描述符是内核为了高效管理已被打开的文件所创建的索引，用于指向被打开的文件，所有执行I/O操作的系统调用都通过文</description>
     </item>
     
     <item>
       <title>nginx配置详解</title>
-      <link>http://xiaowenxiao.github.io/nginx%E9%85%8D%E7%BD%AE/</link>
+      <link>https://xiaowenxiao.github.io/nginx%E9%85%8D%E7%BD%AE/</link>
       <pubDate>Wed, 23 Dec 2020 16:16:02 +0800</pubDate>
       
-      <guid>http://xiaowenxiao.github.io/nginx%E9%85%8D%E7%BD%AE/</guid>
+      <guid>https://xiaowenxiao.github.io/nginx%E9%85%8D%E7%BD%AE/</guid>
       <description>nginx配置文件说明 参考： https://blog.csdn.net/WanJiaBaoBao/article/details/83349622 https://www.cnblogs.com/xzkzzz/p/9224358.html https://www.myfreax.com/nginx-caching-guide/ https://www.cnblogs.com/liuxia912/p/11075630.html 自动生成nginx配置文件： https://www.digitalocean.com/community/tools/nginx#? # set_real_ip_from：真实服务器上一级代理的IP地址或者IP</description>
     </item>
     
     <item>
       <title>systemd服务</title>
-      <link>http://xiaowenxiao.github.io/systemd%E6%9C%8D%E5%8A%A1/</link>
+      <link>https://xiaowenxiao.github.io/systemd%E6%9C%8D%E5%8A%A1/</link>
       <pubDate>Wed, 23 Dec 2020 16:16:02 +0800</pubDate>
       
-      <guid>http://xiaowenxiao.github.io/systemd%E6%9C%8D%E5%8A%A1/</guid>
+      <guid>https://xiaowenxiao.github.io/systemd%E6%9C%8D%E5%8A%A1/</guid>
       <description>systemd服务 Systemd (简体中文) Systemd 入门教程：命令篇 Systemd 入门教程：实战篇 例子： &amp;gt;&amp;gt; cat /etc/systemd/system/prometheus.service [Unit] Description=prometheus After=network.target After=network-online.target Wants=network-online.target [Service] #Type=notify PermissionsStartOnly=yes ExecStart=/srv/prometheus/prometheus --config.file=/srv/prometheus/prometheus.yml Restart=always #RestartSec=15s #TimeoutStartSec=30s LimitNOFILE=65536 [Install] WantedBy=multi-user.target - **[Unit]区块通常是</description>
     </item>
     
     <item>
       <title>一些原理介绍</title>
-      <link>http://xiaowenxiao.github.io/%E4%B8%80%E4%BA%9B%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/</link>
+      <link>https://xiaowenxiao.github.io/%E4%B8%80%E4%BA%9B%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/</link>
       <pubDate>Wed, 23 Dec 2020 16:16:02 +0800</pubDate>
       
-      <guid>http://xiaowenxiao.github.io/%E4%B8%80%E4%BA%9B%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/</guid>
+      <guid>https://xiaowenxiao.github.io/%E4%B8%80%E4%BA%9B%E5%8E%9F%E7%90%86%E4%BB%8B%E7%BB%8D/</guid>
       <description>一些原理介绍 ssh加密传输原理 感谢数学家和计算机科学家，RSA 就是这样一种非对称加密方式，也就是： 使用算法可以生成两把钥匙 A 和 B 使用 A 加密的</description>
     </item>
     
     <item>
       <title>内存CPU占用分析</title>
-      <link>http://xiaowenxiao.github.io/%E5%86%85%E5%AD%98cpu%E5%8D%A0%E7%94%A8%E5%88%86%E6%9E%90/</link>
+      <link>https://xiaowenxiao.github.io/%E5%86%85%E5%AD%98cpu%E5%8D%A0%E7%94%A8%E5%88%86%E6%9E%90/</link>
       <pubDate>Wed, 23 Dec 2020 16:16:02 +0800</pubDate>
       
-      <guid>http://xiaowenxiao.github.io/%E5%86%85%E5%AD%98cpu%E5%8D%A0%E7%94%A8%E5%88%86%E6%9E%90/</guid>
+      <guid>https://xiaowenxiao.github.io/%E5%86%85%E5%AD%98cpu%E5%8D%A0%E7%94%A8%E5%88%86%E6%9E%90/</guid>
       <description>内存 什么是page cache？ Page cache主要用来作为文件系统上的文件数据的缓存来用，尤其是针对当进程对文件有read／write操作的时候</description>
     </item>
     
     <item>
       <title>实用网站</title>
-      <link>http://xiaowenxiao.github.io/%E5%AE%9E%E7%94%A8%E7%BD%91%E7%AB%99/</link>
+      <link>https://xiaowenxiao.github.io/%E5%AE%9E%E7%94%A8%E7%BD%91%E7%AB%99/</link>
       <pubDate>Wed, 23 Dec 2020 16:16:02 +0800</pubDate>
       
-      <guid>http://xiaowenxiao.github.io/%E5%AE%9E%E7%94%A8%E7%BD%91%E7%AB%99/</guid>
+      <guid>https://xiaowenxiao.github.io/%E5%AE%9E%E7%94%A8%E7%BD%91%E7%AB%99/</guid>
       <description>实用网站 Linux Tools Quick Tutorial shell-book 必知的Linux命令技巧1 Bash 脚本教程</description>
     </item>
     
     <item>
       <title>编写可靠的bash脚本</title>
-      <link>http://xiaowenxiao.github.io/%E7%BC%96%E5%86%99%E5%8F%AF%E9%9D%A0%E7%9A%84bash%E8%84%9A%E6%9C%AC/</link>
+      <link>https://xiaowenxiao.github.io/%E7%BC%96%E5%86%99%E5%8F%AF%E9%9D%A0%E7%9A%84bash%E8%84%9A%E6%9C%AC/</link>
       <pubDate>Wed, 23 Dec 2020 16:16:02 +0800</pubDate>
       
-      <guid>http://xiaowenxiao.github.io/%E7%BC%96%E5%86%99%E5%8F%AF%E9%9D%A0%E7%9A%84bash%E8%84%9A%E6%9C%AC/</guid>
+      <guid>https://xiaowenxiao.github.io/%E7%BC%96%E5%86%99%E5%8F%AF%E9%9D%A0%E7%9A%84bash%E8%84%9A%E6%9C%AC/</guid>
       <description>编写可靠的bash脚本 1、set -x -e -u -o pipefail 写过很多bash脚本的人都知道，bash的坑不是一般的多。 其实bash本身并不是一个很严谨的语言，</description>
     </item>
     
     <item>
       <title>win10配置ubuntu子系统</title>
-      <link>http://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</link>
+      <link>https://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</link>
       <pubDate>Wed, 23 Dec 2020 15:53:42 +0800</pubDate>
       
-      <guid>http://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</guid>
+      <guid>https://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</guid>
       <description>配置达到的效果 子系统随win10开机一起启动（跟未装子系统开机时间比较无明显差异） ssh服务配置开机自启，无需其他操作开机直接连接xhell</description>
     </item>
     
