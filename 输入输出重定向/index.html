@@ -84,14 +84,14 @@
 </table>
 <p>所以我们平时在执行shell命令中，都默认是从键盘获得输入，并且将结果输出到控制台上。但是我们可以通过更改文件描述符默认的指向，从而实现输入输出的重定向。比如我们将1指向文件，那么标准的输出就会输出到文件中。</p>
 <p>输出描述符不指定时，默认值为 1, 输入不指定默认为0， 如:</p>
-<pre><code>command &gt; file.txt
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">command &gt; file.txt
 command 2&gt;
 command &lt; file
-</code></pre><p>等同于</p>
-<pre><code>command 1&gt; file.txt
-command 2&gt; 1
+</code></pre></div><p>等同于</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">command 1&gt; file.txt
+command 2&gt; <span style="color:#ae81ff">1</span>
 command 0&lt; file
-</code></pre><p><code>&amp;&gt; file</code> 将1和2 都重定向到file</p>
+</code></pre></div><p><code>&amp;&gt; file</code> 将1和2 都重定向到file</p>
 <h2 id="重定向绑定">重定向绑定</h2>
 <p>好了，在有了以上知识的基础上，我们再来看开头提到的 &gt;/dev/null 2&gt;&amp;1。这条命令其实分为两命令，一个是 &gt;/dev/null，另一个是 2&gt;&amp;1。</p>
 <p>&gt;/dev/null</p>
@@ -133,20 +133,20 @@ command 0&lt; file
 </tbody>
 </table>
 <h2 id="为何-21-要写在后面">为何 2&gt;&amp;1 要写在后面？</h2>
-<pre><code>command &gt; file 2&gt;&amp;1 
-</code></pre><p>首先是 command &gt; file 将标准输出重定向到file中， 2&gt;&amp;1 是标准错误拷贝了标准输出的行为，也就是同样被重定向到file中，最终结果就是标准输出和错误都被重定向到file中。</p>
-<pre><code>command 2&gt;&amp;1 &gt;file 
-</code></pre><p>2&gt;&amp;1 标准错误拷贝了标准输出的行为，但此时标准输出还是在终端。&gt;file 后输出才被重定向到file，但标准错误仍然保持在终端。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">command &gt; file 2&gt;&amp;<span style="color:#ae81ff">1</span> 
+</code></pre></div><p>首先是 command &gt; file 将标准输出重定向到file中， 2&gt;&amp;1 是标准错误拷贝了标准输出的行为，也就是同样被重定向到file中，最终结果就是标准输出和错误都被重定向到file中。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">command 2&gt;&amp;<span style="color:#ae81ff">1</span> &gt;file 
+</code></pre></div><p>2&gt;&amp;1 标准错误拷贝了标准输出的行为，但此时标准输出还是在终端。&gt;file 后输出才被重定向到file，但标准错误仍然保持在终端。</p>
 <p>用strace可以看到：</p>
 <p>command &gt; file 2&gt;&amp;1 这个命令中实现重定向的关键系统调用序列是：</p>
-<pre><code>open(file) == 3 
-dup2(3,1) 
-dup2(1,2)
-</code></pre><p>command 2&gt;&amp;1 &gt;file 这个命令中实现重定向的关键系统调用序列是：</p>
-<pre><code>dup2(1,2) 
-open(file) == 3 
-dup2(3,1)
-</code></pre><p>可以考虑一下不同的 dup2() 调用序列会产生怎样的文件共享结构。请参考APUE 3.10, 3.12</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">open<span style="color:#f92672">(</span>file<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">3</span> 
+dup2<span style="color:#f92672">(</span>3,1<span style="color:#f92672">)</span> 
+dup2<span style="color:#f92672">(</span>1,2<span style="color:#f92672">)</span>
+</code></pre></div><p>command 2&gt;&amp;1 &gt;file 这个命令中实现重定向的关键系统调用序列是：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">dup2<span style="color:#f92672">(</span>1,2<span style="color:#f92672">)</span> 
+open<span style="color:#f92672">(</span>file<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">3</span> 
+dup2<span style="color:#f92672">(</span>3,1<span style="color:#f92672">)</span>
+</code></pre></div><p>可以考虑一下不同的 dup2() 调用序列会产生怎样的文件共享结构。请参考APUE 3.10, 3.12</p>
 
 			</div>
 			
