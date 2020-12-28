@@ -1,0 +1,158 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> 输入输出重定向 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="输入输出重定向">输入输出重定向</h1>
+<h2 id="devnull-21-含义"><strong><code>&gt;/dev/null 2&gt;&amp;1</code> 含义</strong></h2>
+<ul>
+<li><code>/dev/null</code>：代表空设备文件</li>
+<li><code>&gt;</code> ：代表重定向到哪里，例如：echo &ldquo;123&rdquo; &gt; /home/123.txt</li>
+<li><code>1</code>：表示stdout标准输出，系统默认值是1，所以&gt;/dev/null等同于1&gt;/dev/null</li>
+<li><code>2</code>：表示stderr标准错误</li>
+<li><code>&amp;</code>  ：表示等同于的意思，2&gt;&amp;1，表示2的输出重定向等同于1</li>
+</ul>
+<h2 id="devnull-21-语句含义"><strong><code>&gt;/dev/null 2&gt;&amp;1</code> 语句含义：</strong></h2>
+<ul>
+<li>/dev/null ： 首先表示标准输出重定向到空设备文件，也就是不输出任何信息到终端，说白了就是不显示任何信息。</li>
+<li>2&gt;&amp;1 ：接着，标准错误输出重定向（等同于）标准输出，因为之前标准输出已经重定向到了空设备文件，所以标准错误输出也重定向到空设备文件。</li>
+</ul>
+<h2 id="文件描述符">文件描述符</h2>
+<p>文件描述符是与文件输入、输出关联的整数。它们用来跟踪已打开的文件。最常见的文件描述符是stidin、stdout、和stderr。我们可以将某个文件描述符的内容重定向到另外一个文件描述符中。
+当执行shell命令时，会默认打开3个文件，每个文件有对应的文件描述符来方便我们使用：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>文件描述符</th>
+<th>默认情况</th>
+<th>对应文件句柄位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>标准输入（standard input）</td>
+<td>0</td>
+<td>从键盘获得输入</td>
+<td>/proc/slef/fd/0</td>
+</tr>
+<tr>
+<td>标准输出（standard output）</td>
+<td>1</td>
+<td>输出到屏幕（即控制台）</td>
+<td>/proc/slef/fd/1</td>
+</tr>
+<tr>
+<td>错误输出（error output）</td>
+<td>2</td>
+<td>输出到屏幕（即控制台）</td>
+<td>/proc/slef/fd/2</td>
+</tr>
+</tbody>
+</table>
+<p>所以我们平时在执行shell命令中，都默认是从键盘获得输入，并且将结果输出到控制台上。但是我们可以通过更改文件描述符默认的指向，从而实现输入输出的重定向。比如我们将1指向文件，那么标准的输出就会输出到文件中。</p>
+<p>输出描述符不指定时，默认值为 1, 输入不指定默认为0， 如:</p>
+<pre><code>command &gt; file.txt
+command 2&gt;
+command &lt; file
+</code></pre><p>等同于</p>
+<pre><code>command 1&gt; file.txt
+command 2&gt; 1
+command 0&lt; file
+</code></pre><p><code>&amp;&gt; file</code> 将1和2 都重定向到file</p>
+<h2 id="重定向绑定">重定向绑定</h2>
+<p>好了，在有了以上知识的基础上，我们再来看开头提到的 &gt;/dev/null 2&gt;&amp;1。这条命令其实分为两命令，一个是 &gt;/dev/null，另一个是 2&gt;&amp;1。</p>
+<p>&gt;/dev/null</p>
+<p>这条命令的作用是将标准输出1重定向到/dev/null中。/dev/null代表linux的空设备文件，所有往这个文件里面写入的内容都会丢失，俗称“黑洞”。那么执行了 &gt;/dev/null 之后，标准输出就会不再存在，没有任何地方能够找到输出的内容。</p>
+<p>2&gt;&amp;1</p>
+<p>这条命令用到了重定向绑定，采用 &amp; 可以将两个输出绑定在一起。这条命令的作用是错误输出将和标准输出同用一个文件描述符，说人话就是错误输出将会和标准输出输出到同一个地方。</p>
+<p>linux在执行shell命令之前，就会确定好所有的输入输出位置，并且从左到右依次执行重定向的命令，所以 &gt;/dev/null 2&gt;&amp;1 的作用就是让标准输出重定向到 /dev/null中（丢弃标准输出），然后错误输出由于重用了标准输出的描述符，所以错误输出也被定向到了/dev/null中，错误输出同样也被丢弃了。执行了这条命令之后，该条shell命令将不会输出任何信息到控制台，也不会有任何信息输出到文件中。</p>
+<h2 id="nohup结合">nohup结合</h2>
+<p>我们经常使用nohup command &amp;命令形式来启动一些后台程序，比如一些java服务：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">nohup java -jar xxxx.jar &amp;
+</code></pre></div><p>为了不让一些执行信息输出到前台（控制台），我们还会加上刚才提到的 &gt;/dev/null 2&gt;&amp;1 命令来丢弃所有的输出：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">nohup java -jar xxxx.jar &gt;/dev/null 2&gt;&amp;<span style="color:#ae81ff">1</span> &amp;
+</code></pre></div><h2 id="file-21-vs-21-file-的区别">&gt;file 2&gt;&amp;1 VS 2&gt;&amp;1 &gt;file 的区别</h2>
+<p>再回到文章的开头，我说我弄反了 &gt;file和2&gt;&amp;1拼装的顺序，导致出了一点小问题。乍眼看这两条命令貌似是等同的，但其实大为不同。刚才提到了，linux在执行shell命令之前，就会确定好所有的输入输出位置，并且从左到右依次执行重定向的命令。那么我们同样从左到右地来分析 2&gt;&amp;1 &gt;file：</p>
+<ul>
+<li>2&gt;&amp;1，将错误输出绑定到标准输出上。由于此时的标准输出是默认值，也就是输出到屏幕，所以错误输出会输出到屏幕。</li>
+<li>&gt;file，将标准输出1重定向到file中。</li>
+</ul>
+<p>我们用一个表格来更好地说明这两条命令的区别：</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>标准输出</th>
+<th>错误输出</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&gt;file 2&gt;&amp;1</td>
+<td>file</td>
+<td>file</td>
+</tr>
+<tr>
+<td>2&amp;&gt;1 &gt;file</td>
+<td>file</td>
+<td>屏幕</td>
+</tr>
+</tbody>
+</table>
+<h2 id="为何-21-要写在后面">为何 2&gt;&amp;1 要写在后面？</h2>
+<pre><code>command &gt; file 2&gt;&amp;1 
+</code></pre><p>首先是 command &gt; file 将标准输出重定向到file中， 2&gt;&amp;1 是标准错误拷贝了标准输出的行为，也就是同样被重定向到file中，最终结果就是标准输出和错误都被重定向到file中。</p>
+<pre><code>command 2&gt;&amp;1 &gt;file 
+</code></pre><p>2&gt;&amp;1 标准错误拷贝了标准输出的行为，但此时标准输出还是在终端。&gt;file 后输出才被重定向到file，但标准错误仍然保持在终端。</p>
+<p>用strace可以看到：</p>
+<p>command &gt; file 2&gt;&amp;1 这个命令中实现重定向的关键系统调用序列是：</p>
+<pre><code>open(file) == 3 
+dup2(3,1) 
+dup2(1,2)
+</code></pre><p>command 2&gt;&amp;1 &gt;file 这个命令中实现重定向的关键系统调用序列是：</p>
+<pre><code>dup2(1,2) 
+open(file) == 3 
+dup2(3,1)
+</code></pre><p>可以考虑一下不同的 dup2() 调用序列会产生怎样的文件共享结构。请参考APUE 3.10, 3.12</p>
+
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

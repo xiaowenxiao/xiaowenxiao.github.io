@@ -4,10 +4,19 @@
     <link>https://xiaowenxiao.github.io/tags/</link>
     <description>Recent content in Tags on x&#39;Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Wed, 23 Dec 2020 15:53:42 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 28 Dec 2020 15:29:08 +0800</lastBuildDate>
     
         <atom:link href="https://xiaowenxiao.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>log</title>
+      <link>https://xiaowenxiao.github.io/tags/log/</link>
+      <pubDate>Mon, 28 Dec 2020 15:29:08 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/tags/log/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>ubuntu子系统</title>
