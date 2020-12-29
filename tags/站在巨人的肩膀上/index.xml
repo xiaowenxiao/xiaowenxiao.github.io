@@ -1,0 +1,22 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>站在巨人的肩膀上 on x&#39;Blog</title>
+    <link>https://xiaowenxiao.github.io/tags/%E7%AB%99%E5%9C%A8%E5%B7%A8%E4%BA%BA%E7%9A%84%E8%82%A9%E8%86%80%E4%B8%8A/</link>
+    <description>Recent content in 站在巨人的肩膀上 on x&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Tue, 29 Dec 2020 18:20:11 +0800</lastBuildDate>
+    
+        <atom:link href="https://xiaowenxiao.github.io/tags/%E7%AB%99%E5%9C%A8%E5%B7%A8%E4%BA%BA%E7%9A%84%E8%82%A9%E8%86%80%E4%B8%8A/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Linux技能资料收集</title>
+      <link>https://xiaowenxiao.github.io/linux%E6%8A%80%E8%83%BD%E8%B5%84%E6%96%99%E6%94%B6%E9%9B%86/</link>
+      <pubDate>Tue, 29 Dec 2020 18:20:11 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/linux%E6%8A%80%E8%83%BD%E8%B5%84%E6%96%99%E6%94%B6%E9%9B%86/</guid>
+      <description>Linux技能资料收集 iptables教程 Linux命令行文本工具 Linux命令大全 完善的Bash脚本的最简单形式 Linux系统故障排查 Linux Tools</description>
+    </item>
+    
+  </channel>
+</rss>
