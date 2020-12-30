@@ -10,6 +10,15 @@
     
     
     <item>
+      <title>about</title>
+      <link>https://xiaowenxiao.github.io/about/</link>
+      <pubDate>Wed, 30 Dec 2020 11:01:13 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/about/</guid>
+      <description>很多人的努力都是浅尝辄止的。</description>
+    </item>
+    
+    <item>
       <title>Linux技能资料收集</title>
       <link>https://xiaowenxiao.github.io/linux%E6%8A%80%E8%83%BD%E8%B5%84%E6%96%99%E6%94%B6%E9%9B%86/</link>
       <pubDate>Tue, 29 Dec 2020 18:20:11 +0800</pubDate>
@@ -178,15 +187,6 @@
       
       <guid>https://xiaowenxiao.github.io/win10ubuntu%E5%AD%90%E7%B3%BB%E7%BB%9F/</guid>
       <description>配置达到的效果 子系统随win10开机一起启动（跟未装子系统开机时间比较无明显差异） ssh服务配置开机自启，无需其他操作开机直接连接xhell</description>
-    </item>
-    
-    <item>
-      <title>about</title>
-      <link>https://xiaowenxiao.github.io/about/</link>
-      <pubDate>Tue, 15 Dec 2020 15:21:08 +0800</pubDate>
-      
-      <guid>https://xiaowenxiao.github.io/about/</guid>
-      <description>ฅ۶•ﻌ•♡</description>
     </item>
     
   </channel>
