@@ -3,32 +3,42 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://xiaowenxiao.github.io/categories/</loc>
+    <lastmod>2021-01-04T11:05:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/categories/linux/</loc>
+    <lastmod>2021-01-04T11:05:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/tags/</loc>
+    <lastmod>2021-01-04T11:05:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/</loc>
+    <lastmod>2021-01-04T11:05:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/tags/%E4%BC%98%E5%8C%96/</loc>
+    <lastmod>2021-01-04T11:05:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://xiaowenxiao.github.io/%E6%B5%85%E8%B0%88nginx%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/</loc>
+    <lastmod>2021-01-04T11:05:01+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://xiaowenxiao.github.io/about/</loc>
     <lastmod>2020-12-30T11:01:13+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://xiaowenxiao.github.io/categories/</loc>
-    <lastmod>2020-12-29T18:20:11+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/categories/linux/</loc>
-    <lastmod>2020-12-29T18:20:11+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://xiaowenxiao.github.io/linux%E6%8A%80%E8%83%BD%E8%B5%84%E6%96%99%E6%94%B6%E9%9B%86/</loc>
-    <lastmod>2020-12-29T18:20:11+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/tags/</loc>
-    <lastmod>2020-12-29T18:20:11+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://xiaowenxiao.github.io/</loc>
     <lastmod>2020-12-29T18:20:11+08:00</lastmod>
   </url>
   

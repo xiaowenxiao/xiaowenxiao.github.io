@@ -1,0 +1,112 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> 浅谈Nginx性能调优 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="浅谈nginx性能调优">浅谈Nginx性能调优</h1>
+<h2 id="linux系统参数优化">Linux系统参数优化</h2>
+<p>下文中提到的一些配置，需要较新的Linux（2.6以上）内核才能够支持，笔者使用的CentOS 7.4，内核版本3.10，如果不满足需要的话，最好进行相应的升级，毕竟打补丁是件费力不讨好的事情。对于系统层面的调优，通常我们修改文件描述符限制、缓冲区队列长度以及临时端口数量就可以了。</p>
+<h2 id="文件描述符限制">文件描述符限制</h2>
+<p>由于每个TCP连接都要占用一个文件描述符，一旦文件描述符耗尽，新的连接到来就会返回“Too many open files”这样的错误，为了提高性能，我们需要对其进行修改：
+1.系统层级的限制 编辑文件 /etc/sysctl.conf，添加如下内容：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">fs.file-max <span style="color:#f92672">=</span><span style="color:#ae81ff">10000000</span>
+fs.nr_open <span style="color:#f92672">=</span><span style="color:#ae81ff">10000000</span>
+</code></pre></div><p>2.用户层级的限制 编辑文件 /etc/security/limits.conf，添加以下内容：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">*      hard   nofile      <span style="color:#ae81ff">1000000</span>
+*      soft   nofile      <span style="color:#ae81ff">1000000</span>
+</code></pre></div><p>这里我们只要保证用户层级限制不大于系统层级限制就可以了，否则可能会出现无法通过SSH登录系统的问题。修改完毕执行如下命令：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">sysctl -p
+</code></pre></div><p>可以通过执行命令 <code>ulimit -a</code>查看是否修改成功。</p>
+<h2 id="tcp连接队列长度">TCP连接队列长度</h2>
+<p>编辑文件 /etc/sysctl.conf，添加如下内容：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># The length of the syn quene</span>
+net.ipv4.tcp_max_syn_backlog <span style="color:#f92672">=</span><span style="color:#ae81ff">65535</span>
+<span style="color:#75715e"># The length of the tcp accept queue</span>
+net.core.somaxconn <span style="color:#f92672">=</span><span style="color:#ae81ff">65535</span>
+</code></pre></div><p>其中 tcp_max_syn_backlog用于指定半连接SYN队列长度，当新连接到来时，系统会检测半连接SYN队列，如果队列已满，则无法处理该SYN请求，并在 /proc/net/netstat中的 ListenOverflows和 ListenDrops中增加统计计数somaxconn用于指定全连接ACCEPT队列长度，当该队列满了以后，客户端发送的ACK包将无法被正确处理，并返回错误&quot;connection reset by peer&quot;Nginx则会记录一条error日志&quot;no live upstreams while connecting to upstreams&quot;如果出现以上错误，我们需要考虑增大这两项的配置。</p>
+<h2 id="临时端口">临时端口</h2>
+<p>由于Nginx用作代理，每个到上游Web服务的TCP连接都要占用一个临时端口，因此我们需要修改 ip_local_port_range参数 修改 /etc/sysctl.conf文件，添加如下内容：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">net.ipv4.ip_local_port_range <span style="color:#f92672">=</span><span style="color:#ae81ff">102465535</span>
+net.ipv4.ip_local_reserved_ports <span style="color:#f92672">=</span>8080,8081,9000-9010
+</code></pre></div><p>其中，参数 ip_local_reserved_ports用于指定保留端口，这是为了防止服务端口被占用而无法启动。</p>
+<h2 id="nginx参数优化">Nginx参数优化</h2>
+<p>Nginx参数优化主要围绕 nginx.conf这个配置文件展开，不再赘述。</p>
+<h2 id="工作进程">工作进程</h2>
+<p>Nginx性能强大的一个重要原因在于它采用多进程非阻塞I/O模型，因此我们要妥善利用这一点：</p>
+<p>worker_processes  默认的Nginx只有一个master进程一个worker进程，我们需要对其进行修改，可以设置为指定的个数，也可以设置为 auto，即系统的CPU核数。更多的worker数量将导致进程间竞争cpu资源，从而带来不必要的上下文切换。因此这里我们将它设置为cpu的核数即可：    worker_processes   auto</p>
+<p>worker_connections 每个worker可以处理的并发连接数，默认值512不是很够用，我们适当将它增大：    worker_connections 4096</p>
+<p>Nginx支持以下I/O复用方法处理连接：select、 poll、 kqueue、 epoll、 rtsig、 /dev/poll、 eventport。它们分别适用于不同的操作系统，其中 epoll是Linux系统上面效率最高的：    use epoll</p>
+<h2 id="keepalive">KeepAlive</h2>
+<p>为了避免从Nginx到Web服务频繁的建立、断开连接，我们可以启用从HTTP 1.1开始支持的KeepAlive长连接特性，它可以大幅减少CPU和网络开销，在我们的实战中也是对性能提高最大的一环。keepalive必须和 proxy_http_version与 proxy_set_header结合使用， 参考配置如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-nginx" data-lang="nginx"><span style="color:#66d9ef">upstream</span> <span style="color:#e6db74">BACKEND</span> {
+    <span style="color:#f92672">keepalive</span> <span style="color:#ae81ff">300</span>;
+    <span style="color:#f92672">server</span> 127.0.0.1:<span style="color:#ae81ff">8081</span>;
+}
+
+<span style="color:#66d9ef">server</span> {
+    <span style="color:#f92672">listen</span> <span style="color:#ae81ff">8080</span>;
+
+    <span style="color:#f92672">location</span> <span style="color:#e6db74">/</span>{
+        <span style="color:#f92672">proxy_pass</span> <span style="color:#e6db74">http://BACKEND</span>;
+        <span style="color:#f92672">proxy_http_version</span> <span style="color:#ae81ff">1</span><span style="color:#e6db74">.1</span>;
+        <span style="color:#f92672">proxy_set_header</span> <span style="color:#e6db74">Connection&#34;&#34;</span>;
+     }
+ }
+</code></pre></div><p>其中 keepalive既非timeout，也不是连接池数量，官方解释如下：</p>
+<blockquote>
+<p>The connections parameter sets the maximum number of idle keepalive connections to upstream servers that are preserved in the cache of each worker process. When this number is exceeded, the least recently used connections are closed.</p>
+</blockquote>
+<p>可以看出它的意思是“最大空闲长连接数量”，超出这个数量的空闲长连接将被回收，当请求数量稳定而平滑时，空闲长连接数量将会非常小（接近于0），而现实中请求数量是不可能一直平滑而稳定的，当请求数量有波动时，空闲长连接数量也随之波动：</p>
+<p>当空闲长连接数量大于配置值时，将会导致大于配置值的那部分长连接被回收；</p>
+<p>当长连接不够用时，将会重新建立新的长连接。</p>
+<p>因此，如果这个值过小的话，就会导致连接池频繁的回收、分配、再回收。为了避免这种情况出现，可以根据实际情况适当调整这个值，在我们实际情况中，目标QPS为6000，Web服务响应时间约为200ms，因此需要约1200个长连接，而 keepalive值取长连接数量的10%~30%就可以了，这里我们取300，如果不想计算，直接设为1000也是可行的。</p>
+<h2 id="access-log缓存">Access-Log缓存</h2>
+<p>记录日志的I/O开销比较高，好在Nginx支持日志缓存，我们可以利用这个功能，降低写日志文件的频率，从而提高性能。可以将 buffer和 flush两个参数结合使用来控制缓存行为：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">access_log /var/logs/nginx-access.log buffer<span style="color:#f92672">=</span>64k gzip flush<span style="color:#f92672">=</span>1m
+</code></pre></div><p>其中 buffer制定了缓存大小，当缓冲区达到 buffer所指定的大小时，Nginx就会将缓存起来的日志写到文件中；flush指定了缓存超时时间，当 flush指定的时间到达时，也会触发缓存日志写入文件操作。</p>
+<h2 id="文件描述符限制-1">文件描述符限制</h2>
+<p>上一节中已经对Linux系统的文件描述符限制进行了修改，Nginx配置中同样有相应的配置项：worker_rlimit_nofile, 理论上这个值应该设置为 /etc/security/limits.conf 中的值除以 worker_processes, 但实际中不可能每个进程均匀分配，所以这里只要设置成和 /etc/security/limits.conf 一样就可以了</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">worker_rlimit_nofile 1000000;
+</code></pre></div><h2 id="总结">总结</h2>
+<p>以上就是Nginx调优的一些经验，可以看出基本是围绕Nginx的Error日志展开的，之后又对一些比较大的性能瓶颈进行了一些改进。Nginx能够优化的地方非常多，本文只涉及到了其中很小的一些方面，但也足够满足我们的使用场景了。</p>
+
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>
