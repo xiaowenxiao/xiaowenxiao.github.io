@@ -1,0 +1,119 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Pro ethus&#43;Grafana监控Ceph（2） &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/ceph">ceph</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <p>[toc]</p>
+<h1 id="一安装grafana">一、安装grafana</h1>
+<pre><code>1、配置yum源文件
+# vim /etc/yum.repos.d/grafana.repo
+[grafana]
+name=grafana
+baseurl=https://packages.grafana.com/oss/rpm
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+2.通过yum命令安装grafana
+# yum -y install grafana
+
+3.启动grafana并设为开机自启
+# systemctl start grafana-server.service 
+# systemctl enable grafana-server.service
+</code></pre><h1 id="二安装promethus">二、安装promethus</h1>
+<pre><code>1、下载安装包，下载地址
+https://prometheus.io/download/
+2、解压压缩包
+# tar fvxz prometheus-2.14.0.linux-amd64.tar.gz
+3、将解压后的目录改名
+# mv prometheus-2.14.0.linux-amd64 /opt/prometheus
+4、查看promethus版本
+# /opt/prometheus/prometheus --version
+5、配置系统服务启动
+# vim /etc/systemd/system/prometheus.service
+[Unit]
+Description=Prometheus Monitoring System
+Documentation=Prometheus Monitoring System
+
+[Service]
+ExecStart=/opt/prometheus/prometheus \
+  --config.file /opt/prometheus/prometheus.yml \
+  --web.listen-address=:9090
+
+[Install]
+WantedBy=multi-user.target
+6、加载系统服务
+# systemctl daemon-reload
+7、启动服务和添加开机自启动
+# systemctl start prometheus
+# systemctl enable prometheus
+</code></pre><h1 id="三ceph-mgr-prometheus插件配置">三、ceph mgr prometheus插件配置</h1>
+<pre><code># ceph mgr module enable prometheus
+# netstat -nltp | grep mgr 检查端口
+# curl 127.0.0.1:9283/metrics  测试返回值
+</code></pre><h1 id="四配置promethus">四、配置promethus</h1>
+<p>1、在 scrape_configs: 配置项下添加</p>
+<pre><code>vim /opt/prometheus/prometheus.yml
+- job_name: 'ceph_cluster'
+    honor_labels: true
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['192.168.0.201:9283']
+        labels:
+          instance: ceph
+          
+
+</code></pre><p>2、重启promethus服务</p>
+<pre><code># systemctl restart prometheus
+</code></pre><p>3、检查prometheus服务器中是否添加成功</p>
+<pre><code># 浏览器-》 http://x.x.x.x:9090 -》status -》Targets
+</code></pre><h1 id="五配置grafana">五、配置grafana</h1>
+<p>1、浏览器登录 grafana 管理界面<br>
+2、添加data sources，点击configuration&ndash;》data sources<br>
+3、添加dashboard，点击HOME&ndash;》find dashboard on grafana.com<br>
+4、搜索ceph的dashboard <br>
+5、点击HOME&ndash;》Import dashboard, 选择合适的dashboard，记录编号</p>
+
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

@@ -1,0 +1,22 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>踩坑 on x&#39;Blog</title>
+    <link>https://xiaowenxiao.github.io/tags/%E8%B8%A9%E5%9D%91/</link>
+    <description>Recent content in 踩坑 on x&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Fri, 08 Jan 2021 10:41:07 +0800</lastBuildDate>
+    
+        <atom:link href="https://xiaowenxiao.github.io/tags/%E8%B8%A9%E5%9D%91/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>base64加解密</title>
+      <link>https://xiaowenxiao.github.io/base64%E5%8A%A0%E8%A7%A3%E5%AF%86/</link>
+      <pubDate>Fri, 08 Jan 2021 10:41:07 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/base64%E5%8A%A0%E8%A7%A3%E5%AF%86/</guid>
+      <description>base64加解密 一、base64加密 base64 # 从标准输入中读取数据，按Ctrl+D结束输入。将输入的内容编码为base64字符串输出。 echo &amp;#34;str&amp;#34; | base64 #</description>
+    </item>
+    
+  </channel>
+</rss>

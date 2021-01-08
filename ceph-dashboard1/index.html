@@ -1,0 +1,75 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Ceph-Dashboar （1） &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/ceph">ceph</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h1 id="ceph-dashboard介绍">Ceph Dashboard介绍</h1>
+<p>Ceph 的监控可视化界面方案很多&mdash;-grafana、Kraken。但是从Luminous开始，Ceph 提供了原生的Dashboard功能，通过Dashboard可以获取Ceph集群的各种基本状态信息。
+mimic版  (nautilus版)  dashboard 安装。如果是  (nautilus版) 需要安装 ceph-mgr-dashboard</p>
+<h1 id="配置ceph-dashboard">配置Ceph Dashboard</h1>
+<pre><code>1、在每个mgr节点安装
+# yum install ceph-mgr-dashboard 
+2、开启mgr功能
+# ceph mgr module enable dashboard
+3、生成并安装自签名的证书
+# ceph dashboard create-self-signed-cert  
+4、创建一个dashboard登录用户名密码
+# ceph dashboard set-login-credentials admin admin 
+5、查看服务访问方式
+# ceph mgr services
+</code></pre><h1 id="修改默认配置命令">修改默认配置命令</h1>
+<pre><code>指定集群dashboard的访问端口
+# ceph config-key set mgr/dashboard/server_port 7000
+指定集群 dashboard的访问IP
+# ceph config-key set mgr/dashboard/server_addr $IP 
+</code></pre><h1 id="开启object-gateway管理功能">开启Object Gateway管理功能</h1>
+<pre><code>1、创建rgw用户
+# radosgw-admin user create --uid=user01 --display-name=user01 --system
+2、提供Dashboard证书
+# ceph dashboard set-rgw-api-access-key $access_key
+# ceph dashboard set-rgw-api-secret-key $secret_key
+3、配置rgw主机名和端口
+# ceph dashboard set-rgw-api-host 192.168.0.201
+# ceph dashboard set-rgw-api-port 7480
+4、刷新web页面
+</code></pre>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

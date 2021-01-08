@@ -1,0 +1,228 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Ceph日常运维管理 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/ceph">ceph</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <p>[toc]</p>
+<h2 id="一集群监控管理">一、集群监控管理</h2>
+<p>集群整体运行状态</p>
+<pre><code>[root@cephnode01 ~]# ceph -s 
+cluster:
+    id:     8230a918-a0de-4784-9ab8-cd2a2b8671d0
+    health: HEALTH_WARN
+            application not enabled on 1 pool(s)
+ 
+  services:
+    mon: 3 daemons, quorum cephnode01,cephnode02,cephnode03 (age 27h)
+    mgr: cephnode01(active, since 53m), standbys: cephnode03, cephnode02
+    osd: 4 osds: 4 up (since 27h), 4 in (since 19h)
+    rgw: 1 daemon active (cephnode01)
+ 
+  data:
+    pools:   6 pools, 96 pgs
+    objects: 235 objects, 3.6 KiB
+    usage:   4.0 GiB used, 56 GiB / 60 GiB avail
+    pgs:     96 active+clean
+</code></pre><pre><code>id：集群ID
+health：集群运行状态，这里有一个警告，说明是有问题，意思是pg数大于pgp数，通常此数值相等。
+mon：Monitors运行状态。
+osd：OSDs运行状态。
+mgr：Managers运行状态。
+mds：Metadatas运行状态。
+pools：存储池与PGs的数量。
+objects：存储对象的数量。
+usage：存储的理论用量。
+pgs：PGs的运行状态
+</code></pre>
+<pre><code>~]$ ceph -w
+~]$ ceph health detail
+</code></pre><h3 id="pg状态">PG状态</h3>
+<p>查看pg状态查看通常使用下面两个命令即可，dump可以查看更详细信息，如。</p>
+<pre><code>~]$ ceph pg dump
+~]$ ceph pg stat
+</code></pre><h3 id="pool状态">Pool状态</h3>
+<pre><code>~]$ ceph osd pool stats
+~]$ ceph osd pool stats 
+</code></pre><h3 id="osd状态">OSD状态</h3>
+<pre><code>~]$ ceph osd stat
+~]$ ceph osd dump
+~]$ ceph osd tree
+~]$ ceph osd df
+</code></pre><h3 id="monitor状态和查看仲裁状态">Monitor状态和查看仲裁状态</h3>
+<pre><code>~]$ ceph mon stat
+~]$ ceph mon dump
+~]$ ceph quorum_status
+</code></pre><h3 id="集群空间用量">集群空间用量</h3>
+<pre><code>~]$ ceph df
+~]$ ceph df detail
+</code></pre><h2 id="二集群配置管理临时和全局服务平滑重启">二、集群配置管理(临时和全局，服务平滑重启)</h2>
+<p>有时候需要更改服务的配置，但不想重启服务，或者是临时修改。这时候就可以使用tell和daemon子命令来完成此需求。</p>
+<h3 id="1查看运行配置">1、查看运行配置</h3>
+<pre><code>命令格式：
+# ceph daemon {daemon-type}.{id} config show 
+
+命令举例：
+# ceph daemon osd.0 config show 
+</code></pre><h3 id="2tell子命令格式">2、tell子命令格式</h3>
+<p>使用 tell 的方式适合对整个集群进行设置，使用 * 号进行匹配，就可以对整个集群的角色进行设置。而出现节点异常无法设置时候，只会在命令行当中进行报错，不太便于查找。</p>
+<pre><code>命令格式：
+# ceph tell {daemon-type}.{daemon id or *} injectargs --{name}={value} [--{name}={value}]
+命令举例：
+# ceph tell osd.0 injectargs --debug-osd 20 --debug-ms 1
+
+</code></pre><ul>
+<li>daemon-type：为要操作的对象类型如osd、mon、mds等。</li>
+<li>daemon id：该对象的名称，osd通常为0、1等，mon为ceph -s显示的名称，这里可以输入*表示全部。</li>
+<li>injectargs：表示参数注入，后面必须跟一个参数，也可以跟多个</li>
+</ul>
+<h3 id="3daemon子命令">3、daemon子命令</h3>
+<p>使用 daemon 进行设置的方式就是一个个的去设置，这样可以比较好的反馈，此方法是需要在设置的角色所在的主机上进行设置。</p>
+<pre><code>命令格式：
+# ceph daemon {daemon-type}.{id} config set {name}={value}
+命令举例：
+# ceph daemon mon.ceph-monitor-1 config set mon_allow_pool_delete false
+</code></pre><h2 id="三集群操作">三、集群操作</h2>
+<p>命令包含start、restart、status</p>
+<pre><code>1、启动所有守护进程
+# systemctl start ceph.target
+2、按类型启动守护进程
+# systemctl start ceph-mgr.target
+# systemctl start ceph-osd@id
+# systemctl start ceph-mon.target
+# systemctl start ceph-mds.target
+# systemctl start ceph-radosgw.target
+
+</code></pre><h2 id="四添加和删除osd">四、添加和删除OSD</h2>
+<h3 id="1添加osd">1、添加OSD</h3>
+<pre><code>1、格式化磁盘
+ceph-volume lvm zap /dev/sd&lt;id&gt;
+2、进入到ceph-deploy执行目录/my-cluster，添加OSD
+# ceph-deploy osd create --data /dev/sd&lt;id&gt; $hostname
+</code></pre><h3 id="2删除osd">2、删除OSD</h3>
+<pre><code>1、调整osd的crush weight为 0
+ceph osd crush reweight osd.&lt;ID&gt; 0.0
+2、将osd进程stop
+systemctl stop ceph-osd@&lt;ID&gt;
+3、将osd设置out
+ceph osd out &lt;ID&gt;
+4、立即执行删除OSD中数据
+ceph osd purge osd.&lt;ID&gt; --yes-i-really-mean-it
+5、卸载磁盘
+umount /var/lib/ceph/osd/ceph-？
+</code></pre><h2 id="五扩容pg">五、扩容PG</h2>
+<pre><code>ceph osd pool set {pool-name} pg_num 128
+ceph osd pool set {pool-name} pgp_num 128 
+</code></pre><p>注：<br>
+1、扩容大小取跟它接近的2的N次方<br>
+2、在更改pool的PG数量时，需同时更改PGP的数量。PGP是为了管理placement而存在的专门的PG，它和PG的数量应该保持一致。如果你增加pool的pg_num，就需要同时增加pgp_num，保持它们大小一致，这样集群才能正常rebalancing。</p>
+<h2 id="六pool操作">六、Pool操作</h2>
+<h3 id="列出存储池">列出存储池</h3>
+<pre><code>ceph osd lspools
+</code></pre><h3 id="创建存储池">创建存储池</h3>
+<pre><code>命令格式：
+# ceph osd pool create {pool-name} {pg-num} [{pgp-num}]
+命令举例：
+# ceph osd pool create rbd  32 32
+</code></pre><h3 id="设置存储池配额">设置存储池配额</h3>
+<pre><code>命令格式：
+# ceph osd pool set-quota {pool-name} [max_objects {obj-count}] [max_bytes {bytes}]
+命令举例：
+# ceph osd pool set-quota rbd max_objects 10000
+</code></pre><h3 id="删除存储池">删除存储池</h3>
+<pre><code>ceph osd pool delete {pool-name} [{pool-name} --yes-i-really-really-mean-it]
+</code></pre><h3 id="重命名存储池">重命名存储池</h3>
+<pre><code>ceph osd pool rename {current-pool-name} {new-pool-name}
+</code></pre><h3 id="查看存储池统计信息">查看存储池统计信息</h3>
+<pre><code>rados df
+</code></pre><h3 id="给存储池做快照">给存储池做快照</h3>
+<pre><code>ceph osd pool mksnap {pool-name} {snap-name}
+</code></pre><h3 id="删除存储池的快照">删除存储池的快照</h3>
+<pre><code>ceph osd pool rmsnap {pool-name} {snap-name}
+</code></pre><h3 id="获取存储池选项值">获取存储池选项值</h3>
+<pre><code>ceph osd pool get {pool-name} {key}
+</code></pre><h3 id="调整存储池选项值">调整存储池选项值</h3>
+<pre><code>ceph osd pool set {pool-name} {key} {value}
+size：设置存储池中的对象副本数，详情参见设置对象副本数。仅适用于副本存储池。
+min_size：设置 I/O 需要的最小副本数，详情参见设置对象副本数。仅适用于副本存储池。
+pg_num：计算数据分布时的有效 PG 数。只能大于当前 PG 数。
+pgp_num：计算数据分布时使用的有效 PGP 数量。小于等于存储池的 PG 数。
+hashpspool：给指定存储池设置/取消 HASHPSPOOL 标志。
+target_max_bytes：达到 max_bytes 阀值时会触发 Ceph 冲洗或驱逐对象。
+target_max_objects：达到 max_objects 阀值时会触发 Ceph 冲洗或驱逐对象。
+scrub_min_interval：在负载低时，洗刷存储池的最小间隔秒数。如果是 0 ，就按照配置文件里的 osd_scrub_min_interval 。
+scrub_max_interval：不管集群负载如何，都要洗刷存储池的最大间隔秒数。如果是 0 ，就按照配置文件里的 osd_scrub_max_interval 。
+deep_scrub_interval：“深度”洗刷存储池的间隔秒数。如果是 0 ，就按照配置文件里的 osd_deep_scrub_interval 。
+</code></pre><h3 id="获取对象副本数">获取对象副本数</h3>
+<pre><code>ceph osd dump | grep 'replicated size'
+</code></pre><h2 id="七用户管理">七、用户管理</h2>
+<p>Ceph 把数据以对象的形式存于各存储池中。Ceph 用户必须具有访问存储池的权限才能够读写数据。另外，Ceph 用户必须具有执行权限才能够使用 Ceph 的管理命令。</p>
+<h3 id="1查看用户信息">1、查看用户信息</h3>
+<pre><code>查看所有用户信息
+# ceph auth list
+获取所有用户的key与权限相关信息
+# ceph auth get client.admin
+如果只需要某个用户的key信息，可以使用pring-key子命令
+# ceph auth print-key client.admin 
+</code></pre><h3 id="2添加用户">2、添加用户</h3>
+<pre><code># ceph auth add client.john mon 'allow r' osd 'allow rw pool=liverpool'
+# ceph auth get-or-create client.paul mon 'allow r' osd 'allow rw pool=liverpool'
+# ceph auth get-or-create client.george mon 'allow r' osd 'allow rw pool=liverpool' -o george.keyring
+# ceph auth get-or-create-key client.ringo mon 'allow r' osd 'allow rw pool=liverpool' -o ringo.key
+</code></pre><h3 id="3修改用户权限">3、修改用户权限</h3>
+<pre><code># ceph auth caps client.john mon 'allow r' osd 'allow rw pool=liverpool'
+# ceph auth caps client.paul mon 'allow rw' osd 'allow rwx pool=liverpool'
+# ceph auth caps client.brian-manager mon 'allow *' osd 'allow *'
+# ceph auth caps client.ringo mon ' ' osd ' '
+</code></pre><h3 id="4删除用户">4、删除用户</h3>
+<pre><code># ceph auth del {TYPE}.{ID}
+其中， {TYPE} 是 client，osd，mon 或 mds 的其中一种。{ID} 是用户的名字或守护进程的 ID 。
+
+</code></pre><h2 id="八增加和删除monitor">八、增加和删除Monitor</h2>
+<p>一个集群可以只有一个 monitor，推荐生产环境至少部署 3 个。 Ceph 使用 Paxos 算法的一个变种对各种 map 、以及其它对集群来说至关重要的信息达成共识。建议（但不是强制）部署奇数个 monitor 。Ceph 需要 mon 中的大多数在运行并能够互相通信，比如单个 mon，或 2 个中的 2 个，3 个中的 2 个，4 个中的 3 个等。初始部署时，建议部署 3 个 monitor。后续如果要增加，请一次增加 2 个。</p>
+<h3 id="1新增一个monitor">1、新增一个monitor</h3>
+<pre><code># ceph-deploy mon create $hostname
+注意：执行ceph-deploy之前要进入之前安装时候配置的目录。/my-cluster
+</code></pre><h3 id="2删除monitor">2、删除Monitor</h3>
+<pre><code># ceph-deploy mon destroy $hostname
+注意： 确保你删除某个 Mon 后，其余 Mon 仍能达成一致。如果不可能，删除它之前可能需要先增加一个。
+</code></pre>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

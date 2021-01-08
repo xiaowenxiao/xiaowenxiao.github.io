@@ -1,0 +1,327 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Ceph集群部署 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/ceph">ceph</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <p>[toc]</p>
+<h1 id="一ceph版本选择">一、Ceph版本选择</h1>
+<h2 id="ceph版本来源介绍">Ceph版本来源介绍</h2>
+<p>Ceph 社区最新版本是 14，而 Ceph 12 是市面用的最广的稳定版本。
+第一个 Ceph 版本是 0.1 ，要回溯到 2008 年 1 月。多年来，版本号方案一直没变，直到 2015 年 4 月 0.94.1 （ Hammer 的第一个修正版）发布后，为了避免 0.99 （以及 0.100 或 1.00 ？），制定了新策略。</p>
+<p>x.0.z - 开发版（给早期测试者和勇士们）</p>
+<p>x.1.z - 候选版（用于测试集群、高手们）</p>
+<p>x.2.z - 稳定、修正版（给用户们）</p>
+<p>x 将从 9 算起，它代表 Infernalis （ I 是第九个字母），这样第九个发布周期的第一个开发版就是 9.0.0 ；后续的开发版依次是 9.0.1 、 9.0.2 等等。</p>
+<table>
+<thead>
+<tr>
+<th>版本名称</th>
+<th>版本号</th>
+<th>发布时间</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Argonaut</td>
+<td>0.48版本(LTS)</td>
+<td>　　2012年6月3日</td>
+</tr>
+<tr>
+<td>Bobtail</td>
+<td>0.56版本(LTS)</td>
+<td>　2013年5月7日</td>
+</tr>
+<tr>
+<td>Cuttlefish</td>
+<td>0.61版本</td>
+<td>　2013年1月1日</td>
+</tr>
+<tr>
+<td>Dumpling</td>
+<td>0.67版本(LTS)</td>
+<td>　2013年8月14日</td>
+</tr>
+<tr>
+<td>Emperor</td>
+<td>0.72版本</td>
+<td>　　　 2013年11月9</td>
+</tr>
+<tr>
+<td>Firefly</td>
+<td>0.80版本(LTS)</td>
+<td>　2014年5月</td>
+</tr>
+<tr>
+<td>Giant</td>
+<td>Giant</td>
+<td>　October 2014 - April 2015</td>
+</tr>
+<tr>
+<td>Hammer</td>
+<td>Hammer</td>
+<td>　April 2015 - November 2016</td>
+</tr>
+<tr>
+<td>Infernalis</td>
+<td>Infernalis</td>
+<td>　November 2015 - June 2016</td>
+</tr>
+<tr>
+<td>Jewel</td>
+<td>10.2.9</td>
+<td>　2016年4月</td>
+</tr>
+<tr>
+<td>Kraken</td>
+<td>11.2.1</td>
+<td>　2017年10月</td>
+</tr>
+<tr>
+<td>Luminous</td>
+<td>12.2.12</td>
+<td>　2017年10月</td>
+</tr>
+<tr>
+<td>mimic</td>
+<td>13.2.7</td>
+<td>　2018年5月</td>
+</tr>
+<tr>
+<td>nautilus</td>
+<td>14.2.5</td>
+<td>　2019年2月</td>
+</tr>
+</tbody>
+</table>
+<h2 id="mimic新版本特性">mimic新版本特性</h2>
+<ul>
+<li>Bluestore
+<ul>
+<li>ceph-osd的新后端存储BlueStore已经稳定，是新创建的OSD的默认设置。
+BlueStore通过直接管理物理HDD或SSD而不使用诸如XFS的中间文件系统，来管理每个OSD存储的数据，这提供了更大的性能和功能。</li>
+<li>BlueStore支持Ceph存储的所有的完整的数据和元数据校验。</li>
+<li>BlueStore内嵌支持使用zlib，snappy或LZ4进行压缩。（Ceph还支持zstd进行RGW压缩，但由于性能原因，不为BlueStore推荐使用zstd）</li>
+</ul>
+</li>
+<li>集群的总体可扩展性有所提高。我们已经成功测试了多达10,000个OSD的集群。</li>
+<li>ceph-mgr
+<ul>
+<li>ceph-mgr是一个新的后台进程，这是任何Ceph部署的必须部分。虽然当ceph-mgr停止时，IO可以继续，但是度量不会刷新，并且某些与度量相关的请求（例如，ceph df）可能会被阻止。我们建议您多部署ceph-mgr的几个实例来实现可靠性。</li>
+<li>ceph-mgr守护进程daemon包括基于REST的API管理。注：API仍然是实验性质的，目前有一些限制，但未来会成为API管理的基础。</li>
+<li>ceph-mgr还包括一个Prometheus插件。</li>
+<li>ceph-mgr现在有一个Zabbix插件。使用zabbix_sender，它可以将集群故障事件发送到Zabbix Server主机。这样可以方便地监视Ceph群集的状态，并在发生故障时发送通知。</li>
+</ul>
+</li>
+</ul>
+<h1 id="二安装前准备">二、安装前准备</h1>
+<ol>
+<li>安装要求</li>
+</ol>
+<ul>
+<li>最少三台Centos7系统虚拟机用于部署Ceph集群。硬件配置：2C4G，另外每台机器最少挂载三块硬盘(每块盘5G)<br>
+cephnode01 192.168.0.201<br>
+cephnode02 192.168.0.202<br>
+cephnode03 192.168.0.203</li>
+</ul>
+<ol start="2">
+<li>环境准备（在Ceph三台机器上操作）</li>
+</ol>
+<pre><code>（1）关闭防火墙：
+systemctl stop firewalld
+systemctl disable firewalld
+（2）关闭selinux：
+sed -i 's/enforcing/disabled/' /etc/selinux/config
+setenforce 0
+（3）关闭NetworkManager
+systemctl disable NetworkManager &amp;&amp; systemctl stop NetworkManager
+（4）添加主机名与IP对应关系：
+vim /etc/hosts
+192.168.0.201 cephnode01
+192.168.0.202 cephnode02
+192.168.0.203 cephnode03
+（5）设置主机名：
+hostnamectl set-hostname cephnode01
+hostnamectl set-hostname cephnode02
+hostnamectl set-hostname cephnode03
+（6）同步网络时间和修改时区
+systemctl restart chronyd.service &amp;&amp; systemctl enable chronyd.service
+cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+（7）设置文件描述符
+echo &quot;ulimit -SHn 102400&quot; &gt;&gt; /etc/rc.local
+cat &gt;&gt; /etc/security/limits.conf &lt;&lt; EOF
+* soft nofile 65535
+* hard nofile 65535
+EOF
+（8）内核参数优化
+cat &gt;&gt; /etc/sysctl.conf &lt;&lt; EOF
+kernel.pid_max = 4194303
+vm.swappiness = 0 
+EOF
+sysctl -p
+（9）在cephnode01上配置免密登录到cephnode02、cephnode03
+ssh-copy-id root@cephnode02
+ssh-copy-id root@cephnode03
+(10)read_ahead,通过数据预读并且记载到随机访问内存方式提高磁盘读操作
+echo &quot;8192&quot; &gt; /sys/block/sda/queue/read_ahead_kb
+(11) I/O Scheduler，SSD要用noop，SATA/SAS使用deadline
+echo &quot;deadline&quot; &gt;/sys/block/sd[x]/queue/scheduler
+echo &quot;noop&quot; &gt;/sys/block/sd[x]/queue/scheduler
+</code></pre><h1 id="三安装ceph集群">三、安装Ceph集群</h1>
+<p>1、编辑内网yum源,将yum源同步到其它节点并提前做好yum makecache</p>
+<pre><code># vim /etc/yum.repos.d/ceph.repo 
+[Ceph]
+name=Ceph packages for $basearch
+baseurl=http://mirrors.aliyun.com/ceph/rpm-mimic/el7/$basearch
+gpgcheck=0
+priority=1
+
+[Ceph-noarch]
+name=Ceph noarch packages
+baseurl=http://mirrors.aliyun.com/ceph/rpm-mimic/el7/noarch
+gpgcheck=0
+priority=1
+
+[ceph-source]
+name=Ceph source packages
+baseurl=http://mirrors.aliyun.com/ceph/rpm-mimic/el7/SRPMS
+gpgcheck=0
+priority=1
+</code></pre><p>2、安装ceph-deploy，在node01执行(确认ceph-deploy版本是否为2.0.1,)</p>
+<pre><code># yum install -y ceph-deploy
+</code></pre><p>3、创建一个my-cluster目录，所有命令在此目录下进行，在node01执行（文件位置和名字可以随意）</p>
+<pre><code># mkdir /my-cluster
+# cd /my-cluster
+</code></pre><p>4、创建一个Ceph集群，在node01执行</p>
+<pre><code># ceph-deploy new cephnode01 cephnode02 cephnode03 
+</code></pre><p>5、安装Ceph软件（每个节点执行）</p>
+<pre><code># yum -y install epel-release
+# yum install -y ceph
+</code></pre><p>6、生成monitor检测集群所使用的的秘钥</p>
+<pre><code># ceph-deploy mon create-initial
+</code></pre><p>7、安装Ceph CLI，方便执行一些管理命令</p>
+<pre><code># ceph-deploy admin cephnode01 cephnode02 cephnode03
+</code></pre><p>8、配置mgr，用于管理集群</p>
+<pre><code># ceph-deploy mgr create cephnode01 cephnode02 cephnode03
+</code></pre><p>9、部署rgw</p>
+<pre><code># yum install -y ceph-radosgw
+# ceph-deploy rgw create cephnode01
+</code></pre><p>10、部署MDS（CephFS）</p>
+<pre><code># ceph-deploy mds create cephnode01 cephnode02 cephnode03 
+</code></pre><p>11、添加osd</p>
+<pre><code>ceph-deploy osd create --data /dev/sdb cephnode01
+ceph-deploy osd create --data /dev/sdb cephnode02
+ceph-deploy osd create --data /dev/sdb cephnode03
+</code></pre><h1 id="四cephconf">四、ceph.conf</h1>
+<p>1、该配置文件采用init文件语法，#和;为注释，ceph集群在启动的时候会按照顺序加载所有的conf配置文件。 配置文件分为以下几大块配置。</p>
+<pre><code>global：全局配置。
+osd：osd专用配置，可以使用osd.N，来表示某一个OSD专用配置，N为osd的编号，如0、2、1等。
+mon：mon专用配置，也可以使用mon.A来为某一个monitor节点做专用配置，其中A为该节点的名称，ceph-monitor-2、ceph-monitor-1等。使用命令 ceph mon dump可以获取节点的名称。
+client：客户端专用配置。
+</code></pre>
+<p>2、配置文件可以从多个地方进行顺序加载，如果冲突将使用最新加载的配置，其加载顺序为。</p>
+<pre><code>$CEPH_CONF环境变量
+-c 指定的位置
+/etc/ceph/ceph.conf
+~/.ceph/ceph.conf
+./ceph.conf
+</code></pre>
+<p>3、配置文件还可以使用一些元变量应用到配置文件，如。</p>
+<pre><code>$cluster：当前集群名。
+$type：当前服务类型。
+$id：进程的标识符。
+$host：守护进程所在的主机名。
+$name：值为$type.$id。
+</code></pre>
+<p>4、ceph.conf详细参数</p>
+<pre><code>[global]#全局设置
+fsid = xxxxxxxxxxxxxxx                           #集群标识ID 
+mon host = 10.0.1.1,10.0.1.2,10.0.1.3            #monitor IP 地址
+auth cluster required = cephx                    #集群认证
+auth service required = cephx                           #服务认证
+auth client required = cephx                            #客户端认证
+osd pool default size = 3                             #最小副本数 默认是3
+osd pool default min size = 1                           #PG 处于 degraded 状态不影响其 IO 能力,min_size是一个PG能接受IO的最小副本数
+public network = 10.0.1.0/24                            #公共网络(monitorIP段) 
+cluster network = 10.0.2.0/24                           #集群网络
+max open files = 131072                                 #默认0#如果设置了该选项，Ceph会设置系统的max open fds
+mon initial members = node1, node2, node3               #初始monitor (由创建monitor命令而定)
+##############################################################
+[mon]
+mon data = /var/lib/ceph/mon/ceph-$id
+mon clock drift allowed = 1                             #默认值0.05#monitor间的clock drift
+mon osd min down reporters = 13                         #默认值1#向monitor报告down的最小OSD数
+mon osd down out interval = 600      #默认值300      #标记一个OSD状态为down和out之前ceph等待的秒数
+##############################################################
+[osd]
+osd data = /var/lib/ceph/osd/ceph-$id
+osd mkfs type = xfs                                     #格式化系统类型
+osd max write size = 512 #默认值90                   #OSD一次可写入的最大值(MB)
+osd client message size cap = 2147483648 #默认值100    #客户端允许在内存中的最大数据(bytes)
+osd deep scrub stride = 131072 #默认值524288         #在Deep Scrub时候允许读取的字节数(bytes)
+osd op threads = 16 #默认值2                         #并发文件系统操作数
+osd disk threads = 4 #默认值1                        #OSD密集型操作例如恢复和Scrubbing时的线程
+osd map cache size = 1024 #默认值500                 #保留OSD Map的缓存(MB)
+osd map cache bl size = 128 #默认值50                #OSD进程在内存中的OSD Map缓存(MB)
+osd mount options xfs = &quot;rw,noexec,nodev,noatime,nodiratime,nobarrier&quot; #默认值rw,noatime,inode64  #Ceph OSD xfs Mount选项
+osd recovery op priority = 2 #默认值10              #恢复操作优先级，取值1-63，值越高占用资源越高
+osd recovery max active = 10 #默认值15              #同一时间内活跃的恢复请求数 
+osd max backfills = 4  #默认值10                  #一个OSD允许的最大backfills数
+osd min pg log entries = 30000 #默认值3000           #修建PGLog是保留的最大PGLog数
+osd max pg log entries = 100000 #默认值10000         #修建PGLog是保留的最大PGLog数
+osd mon heartbeat interval = 40 #默认值30            #OSD ping一个monitor的时间间隔（默认30s）
+ms dispatch throttle bytes = 1048576000 #默认值 104857600 #等待派遣的最大消息数
+objecter inflight ops = 819200 #默认值1024           #客户端流控，允许的最大未发送io请求数，超过阀值会堵塞应用io，为0表示不受限
+osd op log threshold = 50 #默认值5                  #一次显示多少操作的log
+osd crush chooseleaf type = 0 #默认值为1              #CRUSH规则用到chooseleaf时的bucket的类型
+##############################################################
+[client]
+rbd cache = true #默认值 true      #RBD缓存
+rbd cache size = 335544320 #默认值33554432           #RBD缓存大小(bytes)
+rbd cache max dirty = 134217728 #默认值25165824      #缓存为write-back时允许的最大dirty字节数(bytes)，如果为0，使用write-through
+rbd cache max dirty age = 30 #默认值1                #在被刷新到存储盘前dirty数据存在缓存的时间(seconds)
+rbd cache writethrough until flush = false #默认值true  #该选项是为了兼容linux-2.6.32之前的virtio驱动，避免因为不发送flush请求，数据不回写
+              #设置该参数后，librbd会以writethrough的方式执行io，直到收到第一个flush请求，才切换为writeback方式。
+rbd cache max dirty object = 2 #默认值0              #最大的Object对象数，默认为0，表示通过rbd cache size计算得到，librbd默认以4MB为单位对磁盘Image进行逻辑切分
+      #每个chunk对象抽象为一个Object；librbd中以Object为单位来管理缓存，增大该值可以提升性能
+rbd cache target dirty = 235544320 #默认值16777216    #开始执行回写过程的脏数据大小，不能超过 rbd_cache_max_dirty
+</code></pre>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

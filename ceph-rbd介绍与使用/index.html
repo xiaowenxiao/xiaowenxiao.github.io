@@ -1,0 +1,166 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Ceph-RBD介绍与使用 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/ceph">ceph</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <p>[toc]</p>
+<h1 id="rbd介绍">RBD介绍</h1>
+<blockquote>
+<p>RBD即RADOS Block Device的简称，RBD块存储是最稳定且最常用的存储类型。RBD块设备类似磁盘可以被挂载。 RBD块设备具有快照、多副本、克隆和一致性等特性，数据以条带化的方式存储在Ceph集群的多个OSD中。如下是对Ceph RBD的理解。</p>
+</blockquote>
+<ul>
+<li>RBD 就是 Ceph 里的块设备，一个 4T 的块设备的功能和一个 4T 的 SATA 类似，挂载的 RBD 就可以当磁盘用；</li>
+<li>resizable：这个块可大可小；</li>
+<li>data striped：这个块在Ceph里面是被切割成若干小块来保存，不然 1PB 的块怎么存的下；</li>
+<li>thin-provisioned：精简置备，1TB 的集群是能创建无数 1PB 的块的。其实就是块的大小和在 Ceph 中实际占用大小是没有关系的，刚创建出来的块是不占空间，今后用多大空间，才会在 Ceph 中占用多大空间。举例：你有一个 32G 的 U盘，存了一个2G的电影，那么 RBD 大小就类似于 32G，而 2G 就相当于在 Ceph 中占用的空间  ；</li>
+</ul>
+<blockquote>
+<p>块存储本质就是将裸磁盘或类似裸磁盘(lvm)设备映射给主机使用，主机可以对其进行格式化并存储和读取数据，块设备读取速度快但是不支持共享。</p>
+<blockquote>
+<p>ceph可以通过内核模块和librbd库提供块设备支持。客户端可以通过内核模块挂在rbd使用，客户端使用rbd块设备就像使用普通硬盘一样，可以对其就行格式化然后使用；客户应用也可以通过librbd使用ceph块，典型的是云平台的块存储服务，云平台可以使用rbd作为云的存储后端提供镜像存储、volume块或者客户的系统引导盘等。</p>
+</blockquote>
+</blockquote>
+<p>使用场景：</p>
+<ul>
+<li>云平台（OpenStack做为云的存储后端提供镜像存储）</li>
+<li>K8s容器</li>
+<li>map成块设备直接使用</li>
+<li>ISCIS，安装Ceph客户端</li>
+</ul>
+<h1 id="rbd常用命令">RBD常用命令</h1>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rbd create</td>
+<td>创建块设备映像</td>
+</tr>
+<tr>
+<td>rbd ls</td>
+<td>列出 rbd 存储池中的块设备</td>
+</tr>
+<tr>
+<td>rbd info</td>
+<td>查看块设备信息</td>
+</tr>
+<tr>
+<td>rbd diff</td>
+<td>可以统计 rbd 使用量</td>
+</tr>
+<tr>
+<td>rbd map</td>
+<td>映射块设备</td>
+</tr>
+<tr>
+<td>rbd showmapped</td>
+<td>查看已映射块设备</td>
+</tr>
+<tr>
+<td>rbd remove</td>
+<td>删除块设备</td>
+</tr>
+<tr>
+<td>rbd resize</td>
+<td>更改块设备的大小</td>
+</tr>
+</tbody>
+</table>
+<h1 id="rbd配置操作">RBD配置操作</h1>
+<h2 id="rbd挂载到操作系统">RBD挂载到操作系统</h2>
+<p>1、创建rbd使用的pool</p>
+<pre><code># ceph osd pool create rbd  32 32
+# ceph osd pool application enable rbd rbd 
+
+</code></pre><p>2、创建一个块设备</p>
+<pre><code># rbd create --size 10240 image01 
+</code></pre><p>3、查看块设备</p>
+<pre><code># rbd ls
+# rbd info image01
+</code></pre><p>4、将块设备映射到系统内核</p>
+<pre><code># rbd map image01 
+</code></pre><p>5、禁用当前系统内核不支持的feature</p>
+<pre><code># rbd feature disable foo_image exclusive-lock, object-map, fast-diff, deep-flatten
+</code></pre><p>6、再次映射</p>
+<pre><code># rbd map image01 
+</code></pre><p>7、格式化块设备镜像</p>
+<pre><code># mkfs.xfs /dev/rbd0
+</code></pre><p>8、mount到本地</p>
+<pre><code># mount /dev/rbd0 /mnt
+# umount /mnt
+</code></pre><p>9、取消块设备和内核映射</p>
+<pre><code># rbd unmap image01 
+</code></pre><p>10、删除RBD块设备</p>
+<pre><code># rbd rm image01
+</code></pre><h2 id="快照配置">快照配置</h2>
+<p>1、创建快照</p>
+<pre><code>rbd create --size 10240 image02
+rbd snap create image02@image02_snap01
+</code></pre><p>2、列出创建的快照</p>
+<pre><code># rbd snap list image02
+或
+# rbd ls -l
+</code></pre><p>3、查看快照详细信息</p>
+<pre><code># rbd info image02@image02_snap01
+</code></pre><p>4、克隆快照（快照必须处于被保护状态才能被克隆）</p>
+<pre><code># rbd snap protect image02@image02_snap01
+# rbd clone rbd/image02@image02_snap01 kube/image02_clone01
+</code></pre><p>5、查看快照的children</p>
+<pre><code># rbd children image02
+</code></pre><p>6、去掉快照的parent</p>
+<pre><code># rbd flatten kube/image02_clone01
+</code></pre><p>7、恢复快照</p>
+<pre><code># rbd snap rollback image02@image02_snap01
+</code></pre><p>8、删除快照</p>
+<pre><code># rbd snap unprotect image02@image02_snap01
+# rbd snap remove image02@image02_snap01
+</code></pre><h2 id="导出导入rbd镜像">导出导入RBD镜像</h2>
+<p>1、导出RBD镜像</p>
+<pre><code># rbd export image02 /tmp/image02
+</code></pre><p>2、导出RBD镜像</p>
+<pre><code># rbd import /tmp/image02 rbd/image02 --image-format 2 
+</code></pre>
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

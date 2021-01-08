@@ -1,0 +1,196 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Ceph介绍 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/ceph">ceph</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <p>[toc]</p>
+<h1 id="为什么要用ceph">为什么要用Ceph</h1>
+<blockquote>
+<p>Ceph是当前非常流行的开源分布式存储系统，具有高扩展性、高性能、高可靠性等优点，同时提供块存储服务(rbd)、对象存储服务(rgw)以及文件系统存储服务(cephfs)，Ceph在存储的时候充分利用存储节点的计算能力，在存储每一个数据时都会通过计算得出该数据的位置，尽量的分布均衡。目前也是OpenStack的主流后端存储，随着OpenStack在云计算领域的广泛使用，ceph也变得更加炙手可热。国内目前使用ceph搭建分布式存储系统较为成功的企业有x-sky,深圳元核云，上海UCloud等三家企业。</p>
+</blockquote>
+<blockquote>
+<p>Ceph设计思想：集群可靠性、集群可扩展性、数据安全性、接口统一性、充分发挥存储设备自身的计算能力、去除中心化</p>
+</blockquote>
+<h1 id="ceph架构介绍">Ceph架构介绍</h1>
+<blockquote>
+<p>Ceph使用RADOS提供对象存储，通过librados封装库提供多种存储方式的文件和对象转换。外层通过RGW（Object，有原生的API，而且也兼容Swift和S3的API，适合单客户端使用）、RBD（Block，支持精简配置、快照、克隆，适合多客户端有目录结构）、CephFS（File，Posix接口，支持快照，社会和更新变动少的数据，没有目录结构不能直接打开）将数据写入存储。</p>
+</blockquote>
+<ul>
+<li>高性能<br>
+a. 摒弃了传统的集中式存储元数据寻址的方案，采用CRUSH算法，数据分布均衡，并行度高<br>
+b.考虑了容灾域的隔离，能够实现各类负载的副本放置规则，例如跨机房、机架感知等<br>
+c. 能够支持上千个存储节点的规模，支持TB到PB级的数据</li>
+<li>高可扩展性<br>
+a. 去中心化<br>
+b. 扩展灵活<br>
+c. 随着节点增加而线性增长</li>
+<li>特性丰富<br>
+a. 支持三种存储接口：块存储、文件存储、对象存储<br>
+b. 支持自定义接口，支持多种语言驱动</li>
+</ul>
+<h1 id="ceph核心概念">Ceph核心概念</h1>
+<h2 id="rados">RADOS</h2>
+<blockquote>
+<p>全称Reliable Autonomic Distributed Object Store，即可靠的、自动化的、分布式对象存储系统。RADOS是Ceph集群的精华，用户实现数据分配、Failover等集群操作。</p>
+</blockquote>
+<h2 id="librados">Librados</h2>
+<blockquote>
+<p>Rados提供库，因为RADOS是协议很难直接访问，因此上层的RBD、RGW和CephFS都是通过librados访问的，目前提供PHP、Ruby、Java、Python、C和C++支持。</p>
+</blockquote>
+<h2 id="crush">Crush</h2>
+<blockquote>
+<p>Crush算法是Ceph的两大创新之一，通过Crush算法的寻址操作，Ceph得以摒弃了传统的集中式存储元数据寻址方案。而Crush算法在一致性哈希基础上很好的考虑了容灾域的隔离，使得Ceph能够实现各类负载的副本放置规则，例如跨机房、机架感知等。同时，Crush算法有相当强大的扩展性，理论上可以支持数千个存储节点，这为Ceph在大规模云环境中的应用提供了先天的便利。</p>
+</blockquote>
+<h2 id="pool">Pool</h2>
+<blockquote>
+<p>Pool是存储对象的逻辑分区，它规定了数据冗余的类型和对应的副本分布策略，支持两种类型：副本（replicated）和 纠删码（ Erasure Code）；</p>
+</blockquote>
+<h2 id="pg">PG</h2>
+<blockquote>
+<p>PG（ placement group）是一个放置策略组，它是对象的集合，该集合里的所有对象都具有相同的放置策略，简单点说就是相同PG内的对象都会放到相同的硬盘上，PG是 ceph的逻辑概念，服务端数据均衡和恢复的最小粒度就是PG，一个PG包含多个OSD。引入PG这一层其实是为了更好的分配数据和定位数据；</p>
+</blockquote>
+<h2 id="object">Object</h2>
+<blockquote>
+<p>简单来说块存储读写快，不利于共享，文件存储读写慢，利于共享。能否弄一个读写快，利 于共享的出来呢。于是就有了对象存储。最底层的存储单元，包含元数据和原始数据。</p>
+</blockquote>
+<h1 id="ceph核心组件">Ceph核心组件</h1>
+<h2 id="osd">OSD</h2>
+<blockquote>
+<p>OSD是负责物理存储的进程，一般配置成和磁盘一一对应，一块磁盘启动一个OSD进程。主要功能是存储数据、复制数据、平衡数据、恢复数据，以及与其它OSD间进行心跳检查，负责响应客户端请求返回具体数据的进程等；</p>
+</blockquote>
+<p>Pool、PG和OSD的关系：</p>
+<ul>
+<li>一个Pool里有很多PG；</li>
+<li>一个PG里包含一堆对象，一个对象只能属于一个PG；</li>
+<li>PG有主从之分，一个PG分布在不同的OSD上（针对三副本类型）;</li>
+</ul>
+<h2 id="monitor">Monitor</h2>
+<blockquote>
+<p>一个Ceph集群需要多个Monitor组成的小集群，它们通过Paxos同步数据，用来保存OSD的元数据。负责坚实整个Ceph集群运行的Map视图（如OSD Map、Monitor Map、PG Map和CRUSH Map），维护集群的健康状态，维护展示集群状态的各种图表，管理集群客户端认证与授权；</p>
+</blockquote>
+<h2 id="mds">MDS</h2>
+<blockquote>
+<p>MDS全称Ceph Metadata Server，是CephFS服务依赖的元数据服务。负责保存文件系统的元数据，管理目录结构。对象存储和块设备存储不需要元数据服务；</p>
+</blockquote>
+<h2 id="mgr">Mgr</h2>
+<blockquote>
+<p>ceph 官方开发了 ceph-mgr，主要目标实现 ceph 集群的管理，为外界提供统一的入口。例如cephmetrics、zabbix、calamari、promethus</p>
+</blockquote>
+<h2 id="rgw">RGW</h2>
+<blockquote>
+<p>RGW全称RADOS gateway，是Ceph对外提供的对象存储服务，接口与S3和Swift兼容。</p>
+</blockquote>
+<h2 id="admin">Admin</h2>
+<blockquote>
+<p>Ceph常用管理接口通常都是命令行工具，如rados、ceph、rbd等命令，另外Ceph还有可以有一个专用的管理节点，在此节点上面部署专用的管理工具来实现近乎集群的一些管理工作，如集群部署，集群组件管理等。</p>
+</blockquote>
+<h1 id="ceph三种存储类型">Ceph三种存储类型</h1>
+<h2 id="1-块存储rbd">1、 块存储（RBD）</h2>
+<ul>
+<li>
+<p>优点：</p>
+<ul>
+<li>通过Raid与LVM等手段，对数据提供了保护；</li>
+<li>多块廉价的硬盘组合起来，提高容量；</li>
+<li>多块磁盘组合出来的逻辑盘，提升读写效率；</li>
+</ul>
+</li>
+<li>
+<p>缺点：</p>
+<ul>
+<li>采用SAN架构组网时，光纤交换机，造价成本高；</li>
+<li>主机之间无法共享数据；</li>
+</ul>
+</li>
+<li>
+<p>使用场景</p>
+<ul>
+<li>docker容器、虚拟机磁盘存储分配；</li>
+<li>日志存储；</li>
+<li>文件存储；</li>
+</ul>
+</li>
+</ul>
+<h2 id="2文件存储cephfs">2、文件存储（CephFS）</h2>
+<ul>
+<li>
+<p>优点：</p>
+<ul>
+<li>造价低，随便一台机器就可以了；</li>
+<li>方便文件共享；</li>
+</ul>
+</li>
+<li>
+<p>缺点：</p>
+<ul>
+<li>读写速率低；</li>
+<li>传输速率慢；</li>
+</ul>
+</li>
+<li>
+<p>使用场景</p>
+<ul>
+<li>日志存储；</li>
+<li>FTP、NFS；</li>
+<li>其它有目录结构的文件存储</li>
+</ul>
+</li>
+</ul>
+<h2 id="3对象存储object适合更新变动较少的数据">3、对象存储（Object）(适合更新变动较少的数据)</h2>
+<ul>
+<li>
+<p>优点：</p>
+<ul>
+<li>具备块存储的读写高速；</li>
+<li>具备文件存储的共享等特性；</li>
+</ul>
+</li>
+<li>
+<p>使用场景</p>
+<ul>
+<li>图片存储；</li>
+<li>视频存储；</li>
+</ul>
+</li>
+</ul>
+
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

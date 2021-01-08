@@ -1,0 +1,94 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>存储 on x&#39;Blog</title>
+    <link>https://xiaowenxiao.github.io/tags/%E5%AD%98%E5%82%A8/</link>
+    <description>Recent content in 存储 on x&#39;Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Thu, 07 Jan 2021 10:25:08 +0800</lastBuildDate>
+    
+        <atom:link href="https://xiaowenxiao.github.io/tags/%E5%AD%98%E5%82%A8/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Ceph集群部署</title>
+      <link>https://xiaowenxiao.github.io/ceph%E9%9B%86%E7%BE%A4%E9%83%A8%E7%BD%B2/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:08 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/ceph%E9%9B%86%E7%BE%A4%E9%83%A8%E7%BD%B2/</guid>
+      <description>[toc] 一、Ceph版本选择 Ceph版本来源介绍 Ceph 社区最新版本是 14，而 Ceph 12 是市面用的最广的稳定版本。 第一个 Ceph 版本是 0.1 ，要回溯到 2008 年 1 月。多年来，</description>
+    </item>
+    
+    <item>
+      <title>K8S-使用Ceph存储</title>
+      <link>https://xiaowenxiao.github.io/k8s-%E4%BD%BF%E7%94%A8ceph%E5%AD%98%E5%82%A8/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:08 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/k8s-%E4%BD%BF%E7%94%A8ceph%E5%AD%98%E5%82%A8/</guid>
+      <description>[toc] PV、PVC概述 管理存储是管理计算的一个明显问题。PersistentVolume子系统为用户和管理员提供了一个API，用于抽象如何根据消</description>
+    </item>
+    
+    <item>
+      <title>Pro ethus&#43;Grafana监控Ceph（2）</title>
+      <link>https://xiaowenxiao.github.io/promethus&#43;grafana%E7%9B%91%E6%8E%A7ceph2/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:08 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/promethus&#43;grafana%E7%9B%91%E6%8E%A7ceph2/</guid>
+      <description>[toc] 一、安装grafana 1、配置yum源文件 # vim /etc/yum.repos.d/grafana.repo [grafana] name=grafana baseurl=https://packages.grafana.com/oss/rpm repo_gpgcheck=1 enabled=1 gpgcheck=1 gpgkey=https://packages.grafana.com/gpg.key sslverify=1 sslcacert=/etc/pki/tls/certs/ca-bundle.crt 2.通过yum命令安装grafana # yum -y install grafana 3.启动grafana并设</description>
+    </item>
+    
+    <item>
+      <title>Ceph-Dashboar （1）</title>
+      <link>https://xiaowenxiao.github.io/ceph-dashboard1/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:07 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/ceph-dashboard1/</guid>
+      <description>Ceph Dashboard介绍 Ceph 的监控可视化界面方案很多&amp;mdash;-grafana、Kraken。但是从Luminous开始，Ceph 提供了原</description>
+    </item>
+    
+    <item>
+      <title>Ceph-RBD介绍与使用</title>
+      <link>https://xiaowenxiao.github.io/ceph-rbd%E4%BB%8B%E7%BB%8D%E4%B8%8E%E4%BD%BF%E7%94%A8/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:07 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/ceph-rbd%E4%BB%8B%E7%BB%8D%E4%B8%8E%E4%BD%BF%E7%94%A8/</guid>
+      <description>[toc] RBD介绍 RBD即RADOS Block Device的简称，RBD块存储是最稳定且最常用的存储类型。RBD块设备类似磁盘可以被挂载。 RBD块设备具有</description>
+    </item>
+    
+    <item>
+      <title>Ceph-文件系统-CephFS-的介绍与配置</title>
+      <link>https://xiaowenxiao.github.io/ceph-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-cephfs-%E7%9A%84%E4%BB%8B%E7%BB%8D%E4%B8%8E%E9%85%8D%E7%BD%AE/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:07 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/ceph-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F-cephfs-%E7%9A%84%E4%BB%8B%E7%BB%8D%E4%B8%8E%E9%85%8D%E7%BD%AE/</guid>
+      <description>[toc] 一、CephFs介绍 Ceph File System (CephFS) 是与 POSIX 标准兼容的文件系统, 能够提供对 Ceph 存储集群上的文件访问. Jewel 版本 (10.2.0) 是第一个包含稳定 CephFS 的 Ceph 版本. CephFS 需要至少一个</description>
+    </item>
+    
+    <item>
+      <title>Ceph介绍</title>
+      <link>https://xiaowenxiao.github.io/ceph%E4%BB%8B%E7%BB%8D/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:07 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/ceph%E4%BB%8B%E7%BB%8D/</guid>
+      <description>[toc] 为什么要用Ceph Ceph是当前非常流行的开源分布式存储系统，具有高扩展性、高性能、高可靠性等优点，同时提供块存储服务(rbd)、对象存储</description>
+    </item>
+    
+    <item>
+      <title>Ceph常见问题</title>
+      <link>https://xiaowenxiao.github.io/ceph%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:07 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/ceph%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/</guid>
+      <description>nearfull osd(s) or pool(s) nearfull 此时说明部分osd的存储已经超过阈值，mon会监控ceph集群中OSD空间使用情况。如果要消除WARN,可以修改这两个参数，提高阈</description>
+    </item>
+    
+    <item>
+      <title>Ceph日常运维管理</title>
+      <link>https://xiaowenxiao.github.io/ceph%E6%97%A5%E5%B8%B8%E8%BF%90%E7%BB%B4%E7%AE%A1%E7%90%86/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:07 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/ceph%E6%97%A5%E5%B8%B8%E8%BF%90%E7%BB%B4%E7%AE%A1%E7%90%86/</guid>
+      <description>[toc] 一、集群监控管理 集群整体运行状态 [root@cephnode01 ~]# ceph -s cluster: id: 8230a918-a0de-4784-9ab8-cd2a2b8671d0 health: HEALTH_WARN application not enabled on 1 pool(s) services: mon: 3 daemons, quorum cephnode01,cephnode02,cephnode03 (age 27h) mgr: cephnode01(active, since 53m), standbys: cephnode03, cephnode02 osd: 4 osds: 4 up (since 27h), 4 in (since 19h) rgw: 1 daemon active (cephnode01) data: pools: 6 pools, 96 pgs objects:</description>
+    </item>
+    
+  </channel>
+</rss>

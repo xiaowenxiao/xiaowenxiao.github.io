@@ -1,0 +1,96 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.79.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title> Ceph常见问题 &middot; x&#39;Blog </title>
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/poole.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/syntax.css">
+  <link rel="stylesheet" href="https://xiaowenxiao.github.io/css/we.css">
+  <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+  
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?xxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+</head>
+	<body>
+	<div class="container">
+	<header>
+    <h3 class="site-logo"><a href="https://xiaowenxiao.github.io/">x&#39;Blog</a></h3>
+    <nav><ul class="site-menu"><li><a href="/about">关于我</a></li><li><a href="/categories/ceph">ceph</a></li><li><a href="/categories/k8s">k8s</a></li><li><a href="/categories/linux">linux</a></li><li><a href="https://xiaowenxiao.github.io/index.xml">RSS</a></li></ul></nav>
+</header>
+
+
+		<div class="content">
+			<div class="post">
+			      <h3 id="nearfull-osds-or-pools-nearfull">nearfull osd(s) or pool(s) nearfull</h3>
+<p>此时说明部分osd的存储已经超过阈值，mon会监控ceph集群中OSD空间使用情况。如果要消除WARN,可以修改这两个参数，提高阈值，但是通过实践发现并不能解决问题，可以通过观察osd的数据分布情况来分析原因。</p>
+<h3 id="配置文件设置阈值">配置文件设置阈值</h3>
+<pre><code>  &quot;mon_osd_full_ratio&quot;: &quot;0.95&quot;,
+  &quot;mon_osd_nearfull_ratio&quot;: &quot;0.85&quot;
+，
+</code></pre><p>自动处理</p>
+<pre><code>ceph osd reweight-by-utilization
+ceph osd reweight-by-pg 105 cephfs_data(pool_name)
+</code></pre><p>手动处理：</p>
+<pre><code>ceph osd reweight osd.2 0.8
+</code></pre><p>全局处理</p>
+<pre><code>ceph mgr module ls
+ceph mgr module enable balancer
+ceph balancer on
+ceph balancer mode crush-compat
+ceph config-key set &quot;mgr/balancer/max_misplaced&quot;: &quot;0.01&quot;
+</code></pre><h3 id="pg-故障状态">PG 故障状态</h3>
+<p>PG状态概述
+一个PG在它的生命周期的不同时刻可能会处于以下几种状态中:</p>
+<p>Creating(创建中)
+在创建POOL时,需要指定PG的数量,此时PG的状态便处于creating,意思是Ceph正在创建PG。</p>
+<p>Peering(互联中)
+peering的作用主要是在PG及其副本所在的OSD之间建立互联,并使得OSD之间就这些PG中的object及其元数据达成一致。</p>
+<p>Active(活跃的)
+处于该状态意味着数据已经完好的保存到了主PG及副本PG中,并且Ceph已经完成了peering工作。</p>
+<p>Clean(整洁的)
+当某个PG处于clean状态时,则说明对应的主OSD及副本OSD已经成功互联,并且没有偏离的PG。也意味着Ceph已经将该PG中的对象按照规定的副本数进行了复制操作。</p>
+<p>Degraded(降级的)
+当某个PG的副本数未达到规定个数时,该PG便处于degraded状态,例如:</p>
+<p>在客户端向主OSD写入object的过程,object的副本是由主OSD负责向副本OSD写入的,直到副本OSD在创建object副本完成,并向主OSD发出完成信息前,该PG的状态都会一直处于degraded状态。又或者是某个OSD的状态变成了down,那么该OSD上的所有PG都会被标记为degraded。
+当Ceph因为某些原因无法找到某个PG内的一个或多个object时,该PG也会被标记为degraded状态。此时客户端不能读写找不到的对象,但是仍然能访问位于该PG内的其他object。</p>
+<p>Recovering(恢复中)
+当某个OSD因为某些原因down了,该OSD内PG的object会落后于它所对应的PG副本。而在该OSD重新up之后,该OSD中的内容必须更新到当前状态,处于此过程中的PG状态便是recovering。</p>
+<p>Backfilling(回填)
+当有新的OSD加入集群时,CRUSH会把现有集群内的部分PG分配给它。这些被重新分配到新OSD的PG状态便处于backfilling。</p>
+<p>Remapped(重映射)
+当负责维护某个PG的acting set变更时,PG需要从原来的acting set迁移至新的acting set。这个过程需要一段时间,所以在此期间,相关PG的状态便会标记为remapped。</p>
+<p>Stale(陈旧的)
+默认情况下,OSD守护进程每半秒钟便会向Monitor报告其PG等相关状态,如果某个PG的主OSD所在acting set没能向Monitor发送报告,或者其他的Monitor已经报告该OSD为down时,该PG便会被标记为stale。</p>
+<h3 id="osd状态">OSD状态</h3>
+<p>单个OSD有两组状态需要关注,其中一组使用in/out标记该OSD是否在集群内,另一组使用up/down标记该OSD是否处于运行中状态。两组状态之间并不互斥,换句话说,当一个OSD处于“in”状态时,它仍然可以处于up或down的状态。</p>
+<p>OSD状态为in且up
+这是一个OSD正常的状态,说明该OSD处于集群内,并且运行正常。</p>
+<p>OSD状态为in且down
+此时该OSD尚处于集群中,但是守护进程状态已经不正常,默认在300秒后会被踢出集群,状态进而变为out且down,之后处于该OSD上的PG会迁移至其它OSD。</p>
+<p>OSD状态为out且up
+这种状态一般会出现在新增OSD时,意味着该OSD守护进程正常,但是尚未加入集群。</p>
+<p>OSD状态为out且down
+在该状态下的OSD不在集群内,并且守护进程运行不正常,CRUSH不会再分配PG到该OSD上。</p>
+
+			</div>
+			
+            
+
+		</div>
+</div>
+	</body>
+</html>

@@ -4,7 +4,7 @@
     <link>https://xiaowenxiao.github.io/categories/</link>
     <description>Recent content in Categories on x&#39;Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Mon, 04 Jan 2021 11:05:01 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 08 Jan 2021 10:41:07 +0800</lastBuildDate>
     
         <atom:link href="https://xiaowenxiao.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
     
@@ -12,9 +12,18 @@
     <item>
       <title>linux</title>
       <link>https://xiaowenxiao.github.io/categories/linux/</link>
-      <pubDate>Mon, 04 Jan 2021 11:05:01 +0800</pubDate>
+      <pubDate>Fri, 08 Jan 2021 10:41:07 +0800</pubDate>
       
       <guid>https://xiaowenxiao.github.io/categories/linux/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>ceph</title>
+      <link>https://xiaowenxiao.github.io/categories/ceph/</link>
+      <pubDate>Thu, 07 Jan 2021 10:25:08 +0800</pubDate>
+      
+      <guid>https://xiaowenxiao.github.io/categories/ceph/</guid>
       <description></description>
     </item>
     
